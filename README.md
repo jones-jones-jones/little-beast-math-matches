@@ -21,10 +21,17 @@ On the iPad in Safari: Share > Add to Home Screen. It then opens full screen lik
 3. Skills he misses more often are picked more often automatically.
 
 ## Game rules
-12 problems = 3 periods of 4. First-try correct +2 (every 3rd in a row is a +3 near fall).
-Wrong first try = the announcer calls for a retry ("escape attempt", +1 if right). Second miss = opponent +2.
-Tied after 12 = sudden victory. 12/12 first try = pin.
-Ranks: Mat Rookie > Novice > JV Starter > Varsity > Regional Champ > State Finalist > State Champ.
+**Tournament trail** (edit `TOURNAMENTS` at the top of `app.js` to rename tournaments, towns, or rounds):
+Alabama Local Open (3 rounds) > Southeast Regionals (4) > State Championships (4) > Super 32 (5) > Tulsa Nationals (5).
+Win a match to advance a round. A loss = wrestlebacks: same round, new opponent, no penalty. Win the final to earn the title
+and unlock the next tournament. After Tulsa: "Start a new season". Bigger tournaments have a louder crowd cheer.
+Opponents are made-up first + last names with real hometowns; the announcer uses their first name.
+
+**Match:** 12 problems = 3 periods of 4. First-try correct +2 (every 3rd in a row is a +3 near fall).
+Wrong first try = the announcer calls for a retry ("escape attempt", +1 if right). Two-choice questions get no retry.
+Second miss = opponent +2. Tied after 12 = sudden victory. 12/12 first try = pin.
+Training rooms (one skill category) and the mixed practice match do not move the tournament bracket; training rooms earn medals.
+
 Sounds: crowd cheer on a score, crowd "ooh" on a miss, whistle and bell. Announcer text is always on screen and is
 spoken aloud with the device's built-in voice. The two buttons at the top toggle sound and the announcer voice.
 Debug: add `?debug` to the URL to expose `window.__lbmDebug()`.

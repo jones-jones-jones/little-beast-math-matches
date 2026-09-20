@@ -126,6 +126,7 @@
     return s;
   }
 
+  const article = (word) => (/^[aeiou]/i.test(word) ? 'an ' : 'a ') + word;
   const frac = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
 
   // =====================================================================
@@ -175,14 +176,14 @@
   function storyTwoStep() {
     const x = rnd(3, 9), y = rnd(3, 9), tot = x + y, k = rnd(1, 5), u = tot - k, n = pick(NAMES);
     const t = pick([
-      { txt: `Coach Bell packed ${x} red singlets and ${y} blue singlets. Only ${u} singlets fit in the bag. How many singlets did NOT fit?`, all: 'How many singlets did Coach pack in all?', left: 'How many singlets did not fit in the bag?', unit: 'singlets' },
-      { txt: `${n} has ${x} gold medals and ${y} silver medals. ${n} hangs ${u} medals on the wall. How many medals are NOT on the wall?`, all: `How many medals does ${n} have in all?`, left: 'How many medals are not on the wall?', unit: 'medals' },
+      { txt: `Coach Bell packed ${x} red singlets and ${y} blue singlets. Only ${u} singlets fit in the bag. How many singlets did NOT fit?`, unit: k === 1 ? 'singlet' : 'singlets' },
+      { txt: `${n} has ${x} gold medals and ${y} silver medals. ${n} hangs ${u} medals on the wall. How many medals are NOT on the wall?`, unit: k === 1 ? 'medal' : 'medals' },
     ]);
     return {
       skill: 'story_two', prompt: t.txt,
-      steps: [numStep(t.all, tot, { unit: t.unit }), numStep(t.left, k, { unit: t.unit })],
-      tip: 'This one has two steps. First find how many there are in all. Then take away the number that were used.',
-      explain: `Step 1: ${x} + ${y} = ${tot}. Step 2: ${tot} − ${u} = ${k}.`,
+      steps: [numStep('Solve the problem.', k, { unit: t.unit })],
+      tip: 'This one takes two steps in your head. First find how many there are in all. Then take away the number that were used.',
+      explain: `First add: ${x} + ${y} = ${tot}. Then subtract: ${tot} − ${u} = ${k}.`,
     };
   }
 
@@ -329,7 +330,7 @@
     return { skill: 'mult_props', prompt: 'Even or odd?',
       visual: `<div class="bigeq">${c[0]} × ${c[1]}</div>`,
       steps: [choiceStep('Is the product even or odd?', c[2], ['Even', 'Odd'], 2)],
-      tip: 'An even number of equal groups can always be paired up.',
+      tip: 'Multiply it out, then look at the last digit. 0, 2, 4, 6, 8 means even. 1, 3, 5, 7, 9 means odd.',
       explain: `${c[0]} × ${c[1]} = ${c[0] * c[1]}. If either factor is even the product is even. Odd × odd is odd.` };
   }
 
@@ -385,7 +386,7 @@
     const hundred = Math.random() < 0.5;
     const step = hundred ? 100 : 10;
     let n;
-    do { n = hundred ? rnd(101, 999) : rnd(11, 98); } while (hundred ? n % 100 === 50 : n % 10 === 5);
+    do { n = hundred ? rnd(101, 999) : rnd(11, 98); } while (n % step === 0 || n % step === step / 2);
     const lo = Math.floor(n / step) * step, hi = lo + step, mid = lo + step / 2;
     const ans = n - lo < step / 2 ? lo : hi;
     const pos = 5 + ((n - lo) / step) * 90;
@@ -395,7 +396,7 @@
       skill: 'round_num', prompt: `Use the number line to round ${n} to the nearest ${hundred ? 'hundred' : 'ten'}.`,
       visual: line,
       steps: [choiceStep(`${n} rounds to...`, ans, [lo, mid, hi], 3)],
-      tip: `Which ${hundred ? 'hundred' : 'ten'} is closer? The ${hundred ? 'middle number is 50' : 'middle number is 5'} steps in. Round to a ${hundred ? 'hundred' : 'ten'}, not the middle mark.`,
+      tip: `Is ${n} closer to ${lo} or to ${hi}? Halfway between them is ${mid}. Past halfway, round up. Before halfway, round down.`,
       explain: `${n} is ${n - lo < step / 2 ? 'closer to ' + lo : 'closer to ' + hi} than to the other ${hundred ? 'hundred' : 'ten'}, so it rounds to ${ans}. The middle mark ${mid} is not a ${hundred ? 'hundred' : 'ten'}.`,
     };
   }
@@ -453,14 +454,14 @@
         visual: `<div class="viz">${polygonSvg(sides)}</div>`,
         steps: [choiceStep('Name the shape.', POLY[sides], names, 4)],
         tip: 'Count the straight sides. Pentagon 5, hexagon 6, heptagon 7, octagon 8.',
-        explain: `It has ${sides} sides, so it is a ${POLY[sides]}.`,
+        explain: `It has ${sides} sides, so it is ${article(POLY[sides])}.`,
       };
     }
     return {
-      skill: 'shapes', prompt: `How many sides does a ${POLY[sides]} have?`,
+      skill: 'shapes', prompt: `How many sides does ${article(POLY[sides])} have?`,
       steps: [choiceStep('Pick the number of sides.', String(sides), ['3', '5', '6', '7', '8', '9'], 4)],
       tip: 'Penta means 5, hexa means 6, hepta means 7, octa means 8.',
-      explain: `A ${POLY[sides]} has ${sides} sides.`,
+      explain: `${article(POLY[sides])[0].toUpperCase() + article(POLY[sides]).slice(1)} has ${sides} sides.`,
     };
   }
 
@@ -474,8 +475,8 @@
     { e: '🥄', n: 'teaspoon', c: '5 milliliters', w: ['5 liters', '50 liters', '500 milliliters'] },
     { e: '🪣', n: 'bucket', c: '10 liters', w: ['10 milliliters', '1 milliliter', '100 liters'] },
     { e: '🧃', n: 'juice box', c: '200 milliliters', w: ['2 liters', '20 liters', '2 milliliters'] },
-    { e: '🍼', n: 'sports bottle', c: '500 milliliters', w: ['5 liters', '50 liters', '5 milliliters'] },
-    { e: '🧊', n: 'big team water cooler', c: '20 liters', w: ['20 milliliters', '2 milliliters', '200 liters'] },
+    { e: '🍼', n: 'baby bottle', c: '250 milliliters', w: ['2 liters', '25 liters', '2 milliliters'] },
+    { e: '🐠', n: 'fish tank', c: '40 liters', w: ['40 milliliters', '4 milliliters', '400 liters'] },
   ];
   function volumePick() {
     const v = pick(VOLUMES);

@@ -198,3 +198,27 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .choices.visual { grid-template-columns: 1fr 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .pop, .announcer.good, .announcer.bad, .movebanner, .rankup { animation: none; } }
+
+/* ---------- tournament trail ---------- */
+.btn small { display: block; font-family: var(--body); font-size: .8rem; letter-spacing: .04em; text-transform: none; font-weight: 600; opacity: .8; margin-top: 2px; }
+.btn.big { flex-direction: column; gap: 0; }
+.trail { display: grid; gap: 8px; }
+.stop { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; background: var(--navy2); border: 2px solid var(--navy3); border-radius: 14px; padding: 10px 14px; }
+.stop .em { font-size: 1.8rem; text-align: center; }
+.stop .nm b { display: block; font-family: var(--display); font-weight: 400; letter-spacing: .05em; text-transform: uppercase; font-size: 1.15rem; }
+.stop .nm small { opacity: .8; font-size: .82rem; }
+.stop.current { border-color: var(--gold); background: #1c3160; }
+.stop.done { border-color: var(--green); }
+.stop.locked { opacity: .55; }
+.dots { display: flex; gap: 5px; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; display: block; }
+.dots i.on { background: var(--gold); }
+.dots i.now { box-shadow: 0 0 0 3px rgba(227,179,42,.35); }
+.stop.done .dots i { border-color: var(--green); background: var(--green); }
+.tbanner { background: var(--navy2); border: 3px solid var(--gold); border-radius: 18px; padding: 10px 14px; margin-bottom: 12px; }
+.tbanner span { font-size: 2rem; display: block; }
+.tbanner b { font-family: var(--display); font-weight: 400; letter-spacing: .08em; text-transform: uppercase; font-size: 1.7rem; color: var(--gold2); display: block; }
+.tbanner small { opacity: .8; }
+.versus .fighter small { display: block; opacity: .75; font-size: .8rem; margin-top: 2px; }
+.advance { background: var(--navy2); border: 3px solid var(--green); border-radius: 16px; padding: 12px; font-family: var(--display); font-size: 1.5rem; letter-spacing: .05em; text-transform: uppercase; margin: 12px 0; }
+.advance.loss { border-color: var(--red); }

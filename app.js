@@ -11,7 +11,7 @@
 
   // ---------------------------------------------------------------- storage
   const KEY = 'lbmm.v1';
-  const fresh = () => ({ xp: 0, matches: 0, wins: 0, pins: 0, bestStreak: 0, stats: {}, medals: {}, sound: true, voice: true });
+  const fresh = () => ({ xp: 0, matches: 0, wins: 0, pins: 0, bestStreak: 0, stats: {}, medals: {}, sound: true, voice: true, trail: { t: 0, r: 0 }, titles: [], seasons: 0 });
   function load() {
     try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && typeof j === 'object') return Object.assign(fresh(), j); } catch (e) { /* ignore */ }
     return fresh();
@@ -19,25 +19,32 @@
   let state = load();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
 
-  // ---------------------------------------------------------------- ranks
-  const RANKS = [
-    { name: 'Mat Rookie', xp: 0 }, { name: 'Novice', xp: 60 }, { name: 'JV Starter', xp: 160 },
-    { name: 'Varsity', xp: 320 }, { name: 'Regional Champ', xp: 550 }, { name: 'State Finalist', xp: 850 },
-    { name: 'State Champ', xp: 1250 },
+  // ---------------------------------------------------------------- tournaments
+  // The trail he works through, in order. Edit names/towns/rounds here.
+  const R3 = ['Round 1', 'Semifinal', 'Championship Final'];
+  const R4 = ['Round 1', 'Quarterfinal', 'Semifinal', 'Championship Final'];
+  const TOURNAMENTS = [
+    { id: 'local', name: 'Alabama Local Open', emoji: '🏫', title: 'Local Champion', venue: 'a packed high school gym', blurb: 'Right here at home in Alabama', crowd: 0.7,
+      rounds: R3, towns: ['Dothan, AL', 'Enterprise, AL', 'Opelika, AL', 'Cullman, AL', 'Decatur, AL', 'Gadsden, AL', 'Troy, AL', 'Selma, AL'] },
+    { id: 'regionals', name: 'Southeast Regionals', emoji: '🏟️', title: 'Regional Champion', venue: 'a big convention center', blurb: 'The best kids in the Southeast', crowd: 0.85,
+      rounds: R4, towns: ['Pensacola, FL', 'Columbus, GA', 'Tupelo, MS', 'Chattanooga, TN', 'Macon, GA', 'Mobile, AL', 'Jackson, MS', 'Knoxville, TN'] },
+    { id: 'state', name: 'State Championships', emoji: '🏛️', title: 'State Champion', venue: 'the state championship arena', blurb: 'Only the best in Alabama', crowd: 1.0,
+      rounds: R4, towns: ['Huntsville, AL', 'Birmingham, AL', 'Montgomery, AL', 'Auburn, AL', 'Hoover, AL', 'Tuscaloosa, AL', 'Florence, AL', 'Vestavia Hills, AL'] },
+    { id: 'super32', name: 'Super 32', emoji: '⚡', title: 'Super 32 Champion', venue: 'a huge arena packed with fans', blurb: 'Top kids from all over the country', crowd: 1.15,
+      rounds: ['Round of 32', 'Round of 16', 'Quarterfinal', 'Semifinal', 'Championship Final'], towns: ['Charlotte, NC', 'Richmond, VA', 'Lexington, KY', 'Columbus, OH', 'Franklin, TN', 'Indianapolis, IN', 'Pittsburgh, PA', 'Raleigh, NC'] },
+    { id: 'nationals', name: 'Tulsa Nationals', emoji: '🏆', title: 'National Champion', venue: 'a giant arena in Tulsa, Oklahoma', blurb: 'The final tournament. The whole country is here', crowd: 1.3,
+      rounds: ['Round of 32', 'Round of 16', 'Quarterfinal', 'Semifinal', 'Championship Final'], towns: ['Stillwater, OK', 'Ames, IA', 'Lincoln, NE', 'State College, PA', 'Bozeman, MT', 'Fargo, ND', 'Boise, ID', 'Spokane, WA'] },
   ];
-  function rankIndex(xp) { let r = 0; RANKS.forEach((k, i) => { if (xp >= k.xp) r = i; }); return r; }
+  const TRAINING_TOWNS = [].concat(...TOURNAMENTS.map((t) => t.towns));
 
-  // ---------------------------------------------------------------- opponents (all made up)
-  const OPPS = [
-    { name: 'Carry-the-One Carl', e: '🦝', taunt: 'I never forget to carry the one!' },
-    { name: 'Sir Sums-a-Lot', e: '🐗', taunt: 'Add it up, little guy!' },
-    { name: 'Fraction Frank', e: '🦊', taunt: 'You only get a piece of me!' },
-    { name: 'Array Andy', e: '🐘', taunt: 'I line up everything. Even my wins.' },
-    { name: 'Rounding Rex', e: '🦖', taunt: 'Close enough? Not against me!' },
-    { name: 'The Divider', e: '🐺', taunt: 'I split opponents in equal groups.' },
-    { name: 'Zero Hero Zed', e: '🦍', taunt: 'Anything times me is zero!' },
-    { name: 'Big Product Pete', e: '🐂', taunt: 'Multiply this!' },
-  ];
+  // ---------------------------------------------------------------- opponents (made-up names)
+  const FIRST = ['Jace', 'Colt', 'Brody', 'Wyatt', 'Tucker', 'Hunter', 'Bryce', 'Landon', 'Gunner', 'Kane', 'Ryder', 'Cooper', 'Beau', 'Trey', 'Dax', 'Tate', 'Elijah', 'Mason', 'Silas', 'Knox', 'Ezra', 'Micah', 'Declan', 'Roman', 'Grady', 'Jett', 'Bo', 'Carter', 'Levi', 'Nash'];
+  const LAST = ['Whitfield', 'Calloway', 'Stringer', 'Pruitt', 'Hollis', 'Rutledge', 'Tolliver', 'Mabry', 'Gentry', 'Ledbetter', 'Crenshaw', 'Holloway', 'Prescott', 'Vance', 'Dawson', 'Sutter', 'Merritt', 'Kessler', 'Brandt', 'Novak', 'Ferris', 'Lockhart', 'Mercer', 'Quinn', 'Tanner', 'Whitaker', 'Boyd', 'Cross', 'Hale', 'Ramsey'];
+  const FACES = ['🧒🏻', '🧒🏼', '🧒🏽', '🧒🏾', '🧒🏿', '👦🏻', '👦🏼', '👦🏽', '👦🏾', '👦🏿'];
+  function makeOpp(towns) {
+    const first = pick(FIRST), last = pick(LAST);
+    return { first, last, name: `${first} ${last}`, town: pick(towns), face: pick(FACES) };
+  }
 
   // ---------------------------------------------------------------- audio
   let ac = null;
@@ -70,16 +77,17 @@
   const sfx = {
     tap() { tone(520, 0.05, 'triangle', 0, 0.08); },
     good() { tone(660, 0.12, 'triangle', 0, 0.14); tone(880, 0.18, 'triangle', 0.1, 0.14); },
-    cheer() { // crowd roar, a burst of claps, and a rising fanfare
-      noise(1.6, 1500, 0.6, 0.32, 0, 0.12); noise(1.6, 650, 0.7, 0.24, 0.04, 0.15);
-      for (let i = 0; i < 16; i++) noise(0.05, 2600 + Math.random() * 1500, 1.2, 0.16, 0.15 + i * 0.07 + Math.random() * 0.03, 0.004, 'highpass');
+    cheer(k) { // crowd roar, a burst of claps, and a rising fanfare. k = crowd size (bigger tournaments roar louder)
+      k = k || 0.8;
+      noise(1.4 + k * 0.5, 1500, 0.6, 0.32 * k, 0, 0.12); noise(1.4 + k * 0.5, 650, 0.7, 0.24 * k, 0.04, 0.15);
+      for (let i = 0; i < 10 + Math.round(k * 8); i++) noise(0.05, 2600 + Math.random() * 1500, 1.2, 0.16 * k, 0.15 + i * 0.07 + Math.random() * 0.03, 0.004, 'highpass');
       [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, 'triangle', i * 0.09, 0.11));
     },
     oh() { noise(0.9, 500, 0.8, 0.22, 0, 0.1); tone(330, 0.45, 'sawtooth', 0, 0.08, 190); }, // crowd "ooooh"
     groan() { noise(1.1, 420, 0.8, 0.26, 0, 0.12); tone(260, 0.6, 'sawtooth', 0, 0.09, 130); },
     whistle() { tone(2300, 0.14, 'square', 0, 0.05); tone(2050, 0.4, 'square', 0.15, 0.05); },
     bell() { tone(880, 0.9, 'sine', 0, 0.2); tone(1320, 0.7, 'sine', 0, 0.07); },
-    win() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, 'triangle', i * 0.13, 0.13)); noise(2, 1500, 0.6, 0.3, 0.2, 0.2); },
+    win(k) { k = k || 0.8; [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, 'triangle', i * 0.13, 0.13)); noise(2, 1500, 0.6, 0.3 * k, 0.2, 0.2); },
   };
 
   // announcer voice (text is always shown; speech is optional)
@@ -140,12 +148,16 @@
   let match = null;
   let quitArm = false, resetArm = false;
 
-  function startMatch(cat) {
-    const ri = rankIndex(state.xp);
-    const opp = pick(OPPS.slice(0, Math.min(OPPS.length, ri + 3)));
-    match = { cat, opp, i: 0, total: 12, per: 4, beast: 0, oppScore: 0, streak: 0, best: 0, clean: 0, seen: new Set(), lastSkill: null, missed: [], cur: null, line: '', kind: '', pop: '' };
-    quitArm = false; view = 'intro'; render();
+  function newMatch(cat, opp, tour) {
+    match = { cat, opp, tour: tour || null, i: 0, total: 12, per: 4, beast: 0, oppScore: 0, streak: 0, best: 0, clean: 0, seen: new Set(), lastSkill: null, missed: [], cur: null, line: '', kind: '', pop: '' };
+    quitArm = false; view = 'intro'; render(); window.scrollTo(0, 0);
   }
+  const startMatch = (cat) => newMatch(cat, makeOpp(TRAINING_TOWNS), null); // training room / exhibition
+  function startTournamentMatch() {
+    const tr = state.trail; if (tr.t >= TOURNAMENTS.length) return;
+    newMatch('mix', makeOpp(TOURNAMENTS[tr.t].towns), { t: tr.t, r: tr.r });
+  }
+  const crowd = () => (match && match.tour ? TOURNAMENTS[match.tour.t].crowd : 0.8);
 
   function newProblem() {
     let p, tries = 0, key;
@@ -175,12 +187,12 @@
     if (st.kind === 'num' && (val === '' || val == null)) return;
     const ok = st.kind === 'num' ? Number(val) === st.answer : val === st.answer;
     c.given = val;
-    const o = match.opp.name;
+    const o = match.opp.first;
     if (ok) {
       c.results.push({ ok: true, tries: c.tries + 1 });
       c.phase = 'fb';
       if (isLast()) resolveProblem(); else { sfx.good(); match.line = line('step', o); match.kind = 'good'; say(match.line); }
-    } else if (c.tries === 0) {
+    } else if (c.tries === 0 && !(st.kind === 'choice' && st.choices.length <= 2)) { // no retry when only one option would be left
       c.tries = 1; c.wrong.push(val); c.phase = 'retry'; c.input = '';
       sfx.oh(); match.line = line('stuck', o); match.kind = 'bad'; say(match.line);
     } else {
@@ -192,7 +204,7 @@
   }
 
   function resolveProblem() {
-    const c = match.cur, m = match, o = m.opp.name;
+    const c = match.cur, m = match, o = m.opp.first;
     const allOk = c.results.length === c.p.steps.length && c.results.every((r) => r.ok);
     const clean = allOk && c.results.every((r) => r.tries === 1) && !c.hint;
     const s = state.stats[c.p.skill] || (state.stats[c.p.skill] = { a: 0, c: 0 });
@@ -202,9 +214,9 @@
       m.streak++; m.best = Math.max(m.best, m.streak); m.clean++;
       if (m.streak % 3 === 0) { pts = 3; move = 'Near fall! +3'; m.line = line('near', o); }
       else { pts = 2; move = pick(['Takedown! +2', 'Reversal! +2', 'Takedown! +2']); m.line = line('good', o); }
-      m.kind = 'good'; sfx.cheer();
+      m.kind = 'good'; sfx.cheer(crowd());
     } else if (allOk) {
-      m.streak = 0; pts = 1; move = 'Escape! +1'; m.line = line('escape', o); m.kind = 'good'; sfx.cheer();
+      m.streak = 0; pts = 1; move = 'Escape! +1'; m.line = line('escape', o); m.kind = 'good'; sfx.cheer(crowd());
     } else {
       m.streak = 0; opp = 2; move = `${o} scores. +2`; m.line = line('lost', o); m.kind = 'bad'; sfx.groan();
       m.missed.push({
@@ -227,7 +239,7 @@
     }
     match.i++;
     if (match.i === match.total) {
-      if (match.beast === match.oppScore) { match.line = line('sudden', match.opp.name); match.kind = ''; sfx.whistle(); say(match.line); return newProblem(); }
+      if (match.beast === match.oppScore) { match.line = line('sudden', match.opp.first); match.kind = ''; sfx.whistle(); say(match.line); return newProblem(); }
       return endMatch();
     }
     if (match.i > match.total) return endMatch();
@@ -236,20 +248,34 @@
   }
 
   function endMatch() {
-    const m = match;
+    const m = match, first = m.opp.first;
     const win = m.beast > m.oppScore, pin = win && m.clean === m.total;
-    const before = rankIndex(state.xp);
     const gain = m.beast + (win ? 5 : 0) + (pin ? 10 : 0);
     state.xp += gain; state.matches++; if (win) state.wins++; if (pin) state.pins++;
     state.bestStreak = Math.max(state.bestStreak, m.best);
     if (m.cat !== 'mix') { const lvl = m.clean >= m.total ? 3 : m.clean >= 11 ? 2 : m.clean >= 10 ? 1 : 0; if (lvl > (state.medals[m.cat] || 0)) state.medals[m.cat] = lvl; }
+    // tournament bracket: a win advances a round; a loss means the wrestlebacks (same round, new opponent)
+    let adv = null;
+    const T = m.tour ? TOURNAMENTS[m.tour.t] : null;
+    if (T && win) {
+      const tr = state.trail; adv = { title: false, allDone: false, next: null }; tr.r++;
+      if (tr.r >= T.rounds.length) { state.titles.push(T.id); adv.title = true; tr.t++; tr.r = 0; if (tr.t >= TOURNAMENTS.length) adv.allDone = true; }
+      if (!adv.allDone) adv.next = { T: TOURNAMENTS[tr.t], round: TOURNAMENTS[tr.t].rounds[tr.r] };
+    }
     save();
-    m.result = { win, pin, gain, rankedUp: rankIndex(state.xp) > before };
-    m.line = pin ? 'IT\'S A PIN! Little Beast wins by fall! The crowd is going wild!'
-      : win ? `That's the match! Little Beast wins ${m.beast} to ${m.oppScore}!`
-        : `${m.opp.name} takes this one, ${m.oppScore} to ${m.beast}. Little Beast will be back! Study the film and get a rematch!`;
+    m.result = { win, pin, gain, adv, T };
+    if (T) {
+      m.line = adv && adv.allDone ? `Little Beast is the ${T.title}! He wins the ${T.name}, and the whole arena is on its feet! What a season!`
+        : adv && adv.title ? `That's the title! Little Beast wins the ${T.name}! He is the ${T.title}!`
+        : adv ? (pin ? `IT'S A PIN! Little Beast pins ${first} and moves on to the ${adv.next.round}!` : `That's the match! Little Beast beats ${first}, ${m.beast} to ${m.oppScore}, and moves on to the ${adv.next.round}!`)
+        : `${first} takes this one, ${m.oppScore} to ${m.beast}. But Little Beast drops to the wrestlebacks, and he is still alive in this tournament!`;
+    } else {
+      m.line = pin ? 'IT\'S A PIN! Little Beast wins by fall! The crowd is going wild!'
+        : win ? `That's the match! Little Beast wins ${m.beast} to ${m.oppScore}!`
+          : `${first} takes this one, ${m.oppScore} to ${m.beast}. Little Beast will be back! Study the film and get a rematch!`;
+    }
     m.kind = win ? 'good' : 'bad';
-    if (win) sfx.win(); else sfx.groan();
+    if (win) { sfx.win(crowd()); if (adv && adv.title) sfx.cheer(1.3); } else sfx.groan();
     say(m.line);
     view = 'result'; render(); window.scrollTo(0, 0);
   }
@@ -276,28 +302,39 @@
       <button class="iconbtn ${state.voice ? '' : 'off'}" data-act="voice" aria-label="Toggle announcer voice">🎙️</button></div>`;
   }
 
+  function trailHtml() {
+    const tr = state.trail, done = tr.t >= TOURNAMENTS.length;
+    const stops = TOURNAMENTS.map((T, i) => {
+      const st = i < tr.t ? 'done' : i === tr.t ? 'current' : 'locked';
+      const dots = T.rounds.map((_, ri) => `<i class="${st === 'done' || (st === 'current' && ri < tr.r) ? 'on' : ''} ${st === 'current' && ri === tr.r ? 'now' : ''}"></i>`).join('');
+      const sub = st === 'current' ? `${T.rounds[tr.r]} · ${T.blurb}` : st === 'done' ? `✔ ${T.title}` : T.blurb;
+      return `<div class="stop ${st}"><span class="em">${st === 'locked' ? '🔒' : T.emoji}</span><span class="nm"><b>${T.name}</b><small>${esc(sub)}</small></span><span class="dots">${dots}</span></div>`;
+    }).join('');
+    const cur = TOURNAMENTS[Math.min(tr.t, TOURNAMENTS.length - 1)];
+    const cta = done
+      ? `<div class="rankup">🏆 National Champion! You won every tournament.</div><button class="btn big" data-act="season">Start a new season 🔁</button>`
+      : `<button class="btn big" data-act="continue">Next match: ${cur.rounds[tr.r]} ▶<small>${cur.name}</small></button>`;
+    return `${cta}<h2 class="section">Tournament trail</h2><div class="trail">${stops}</div>`;
+  }
+
   function homeHtml() {
-    const ri = rankIndex(state.xp), r = RANKS[ri], nx = RANKS[ri + 1];
-    const pct = nx ? Math.round(((state.xp - r.xp) / (nx.xp - r.xp)) * 100) : 100;
     const medal = (k) => ['', '🥉', '🥈', '🥇'][state.medals[k] || 0];
     return `${topbar()}
       <div class="hero">${LOGO}<h1>Little Beast<span>Math Matches</span></h1><p>Folkstyle Edition</p></div>
-      <div class="rank"><div class="row"><div class="name">${r.name}</div><div class="xp">${state.xp} XP${nx ? ` · next: ${nx.name} at ${nx.xp}` : ' · top rank!'}</div></div>
-        <div class="bar"><i style="width:${pct}%"></i></div></div>
-      <button class="btn big" data-act="mix">Step on the mat 🤼</button>
+      ${trailHtml()}
       <h2 class="section">Training rooms</h2>
       <div class="grid">${Object.keys(CATS).map((k) => `<button class="room" data-act="cat" data-cat="${k}"><span class="em">${CATS[k].emoji}</span><span><b>${CATS[k].name}</b><small>${CATS[k].blurb}</small></span><span class="medal">${medal(k)}</span></button>`).join('')}</div>
-      <div style="margin-top:22px"><button class="btn ghost" data-act="locker" style="width:100%">🏆 Locker room</button></div>
+      <div style="margin-top:22px;display:grid;gap:12px"><button class="btn ghost" data-act="mix">🤼 Practice match (mixed)</button><button class="btn ghost" data-act="locker">🏆 Locker room</button></div>
       <div class="footer">Each match is 12 problems, 3 periods. Get them right to score!</div>`;
   }
 
   function introHtml() {
-    const m = match, o = m.opp;
-    const title = m.cat === 'mix' ? 'Championship match' : CATS[m.cat].name;
-    return `${topbar()}<div class="stage"><h3 style="color:var(--gold)">Weigh-in</h3><h2>${title}</h2>
-      <div class="versus"><div class="fighter">${LOGO}<b>Little Beast</b></div><div class="vs">VS</div>
-      <div class="fighter opp"><div class="big">${o.e}</div><b>${esc(o.name)}</b></div></div>
-      <p class="taunt">${esc(o.name)}: “${esc(o.taunt)}”</p>
+    const m = match, o = m.opp, T = m.tour ? TOURNAMENTS[m.tour.t] : null;
+    const title = T ? `${T.rounds[m.tour.r]}` : (m.cat === 'mix' ? 'Practice match' : CATS[m.cat].name);
+    const banner = T ? `<div class="tbanner"><span>${T.emoji}</span><b>${T.name}</b><small>${esc(T.venue)}</small></div>` : '';
+    return `${topbar()}<div class="stage">${banner}<h3 style="color:var(--gold)">${T ? 'Weigh-in' : 'Warm-up'}</h3><h2>${title}</h2>
+      <div class="versus"><div class="fighter">${LOGO}<b>Little Beast</b><small>Alabama</small></div><div class="vs">VS</div>
+      <div class="fighter opp"><div class="big">${o.face}</div><b>${esc(o.name)}</b><small>${esc(o.town)}</small></div></div>
       <button class="btn big" data-act="whistle">Whistle! 🥇</button>
       <p style="margin-top:16px"><button class="btn ghost small" data-act="home">Back</button></p></div>`;
   }
@@ -355,20 +392,27 @@
   }
 
   function resultHtml() {
-    const m = match, r = m.result;
-    const ri = rankIndex(state.xp);
+    const m = match, r = m.result, T = r.T, adv = r.adv;
     const film = m.missed.length ? `<div class="film"><h3>🎬 Film study</h3><ul>${m.missed.map((x) => `<li><em>${esc(x.skill)}:</em> ${esc(x.prompt)}<br>Answer: <b>${esc(x.answer)}</b><br><small>${esc(x.explain.replace(/<[^>]+>/g, ''))}</small></li>`).join('')}</ul></div>` : '';
+    let box = '', btn = `<button class="btn big" data-act="rematch">Rematch</button>`;
+    if (T) {
+      if (adv && adv.allDone) { box = `<div class="rankup">🏆 ${T.title}! Every tournament won!</div>`; btn = ''; }
+      else if (adv && adv.title) box = `<div class="rankup">${T.emoji} ${T.title}! Next stop: ${adv.next.T.name}</div>`;
+      else if (adv) box = `<div class="advance">Advance to the ${adv.next.round}</div>`;
+      else box = `<div class="advance loss">Wrestlebacks! Win the rematch to stay alive in the ${T.name}.</div>`;
+      if (adv && !adv.allDone) btn = `<button class="btn big" data-act="rematch">Next match: ${adv.next.round}<small>${adv.next.T.name}</small></button>`;
+      else if (!adv) btn = `<button class="btn big" data-act="rematch">Wrestle back</button>`;
+    }
     return `<div class="stage result">${topbar()}<h2 class="${r.win ? 'win' : 'loss'}">${r.pin ? 'Pin! 🏆' : r.win ? 'Victory! 🥇' : 'Tough loss'}</h2>
-      <p class="taunt">${r.pin ? 'A perfect match. Every problem right the first time.' : r.win ? 'Nice work out there.' : 'Every champion loses matches. Study the film below, then get a rematch.'}</p>
+      <p class="taunt">${r.pin ? 'A perfect match. Every problem right the first time.' : r.win ? 'Nice work out there.' : 'Every champion loses matches. Study the film below, then get back out there.'}</p>
       ${ann()}
-      <div class="stats3"><div><b>${m.beast}–${m.oppScore}</b><small>Final score</small></div><div><b>${m.clean}/${m.total}</b><small>First try</small></div><div><b>+${r.gain}</b><small>XP earned</small></div></div>
-      ${r.rankedUp ? `<div class="rankup">Rank up! You are now ${RANKS[ri].name}</div>` : ''}
+      <div class="stats3"><div><b>${m.beast}–${m.oppScore}</b><small>Final score</small></div><div><b>${m.clean}/${m.total}</b><small>First try</small></div><div><b>+${r.gain}</b><small>Points earned</small></div></div>
+      ${box}
       ${film}
-      <div style="display:grid;gap:12px;margin-top:14px"><button class="btn big" data-act="rematch">Rematch</button><button class="btn ghost" data-act="home">Home</button></div></div>`;
+      <div style="display:grid;gap:12px;margin-top:14px">${btn}<button class="btn ghost" data-act="home">Home</button></div></div>`;
   }
 
   function lockerHtml() {
-    const ri = rankIndex(state.xp);
     const rows = Object.keys(SKILLS).map((id) => ({ id, s: state.stats[id] })).filter((x) => x.s && x.s.a > 0)
       .sort((a, b) => a.s.c / a.s.a - b.s.c / b.s.a);
     const skillRows = rows.length ? rows.map((x) => {
@@ -376,12 +420,13 @@
       return `<div class="skillrow"><span>${SKILLS[x.id].name}</span><div class="bar ${pct < 60 ? 'low' : ''}"><i style="width:${pct}%"></i></div><b>${pct}%</b></div>`;
     }).join('') : '<p style="opacity:.75">Play a match and his skill scores will show up here. The lowest ones come first, so you can see where to practice.</p>';
     const medals = Object.keys(CATS).map((k) => `<div><span>${['⬜', '🥉', '🥈', '🥇'][state.medals[k] || 0]}</span>${CATS[k].name}</div>`).join('');
+    const titles = TOURNAMENTS.map((T) => { const n = state.titles.filter((x) => x === T.id).length; return `<div><span>${n ? T.emoji : '⬜'}</span>${n ? T.title + (n > 1 ? ` ×${n}` : '') : T.name}</div>`; }).join('');
     return `${topbar('<button class="btn ghost small" data-act="home" style="margin-right:auto">◀ Home</button>')}
       <div class="hero"><h1>Locker room</h1></div>
-      <div class="rank"><div class="row"><div class="name">${RANKS[ri].name}</div><div class="xp">${state.xp} XP</div></div></div>
       <div class="stats3"><div><b>${state.matches}</b><small>Matches</small></div><div><b>${state.wins}</b><small>Wins</small></div><div><b>${state.pins}</b><small>Pins</small></div></div>
+      <h2 class="section">Tournament titles</h2><div class="medals">${titles}</div>
       <h2 class="section">Skills (first-try accuracy)</h2><div class="film">${skillRows}</div>
-      <h2 class="section">Medals</h2><div class="medals">${medals}</div>
+      <h2 class="section">Training medals</h2><div class="medals">${medals}</div>
       <p style="text-align:center;margin-top:8px;font-size:.85rem;opacity:.7">Medal: 10, 11, or 12 first-try answers in a training-room match.</p>
       <p style="text-align:center;margin-top:24px"><button class="btn ghost small" data-act="reset">${resetArm ? 'Tap again to erase everything' : 'Reset progress'}</button></p>`;
   }
@@ -418,8 +463,15 @@
       case 'voice': state.voice = !state.voice; if (!state.voice && window.speechSynthesis) window.speechSynthesis.cancel(); save(); return render();
       case 'mix': return startMatch('mix');
       case 'cat': return startMatch(el.dataset.cat);
-      case 'whistle': sfx.whistle(); match.line = line('p1', match.opp.name); match.kind = ''; say(match.line); return newProblem();
-      case 'period': { const p = match.i / match.per + 1; sfx.whistle(); match.line = line(p === 2 ? 'p2' : 'p3', match.opp.name); match.kind = ''; say(match.line); return newProblem(); }
+      case 'continue': return startTournamentMatch();
+      case 'season': state.trail = { t: 0, r: 0 }; state.seasons++; save(); return render();
+      case 'whistle': {
+        sfx.whistle(); const m = match, o = m.opp;
+        if (m.tour) { const T = TOURNAMENTS[m.tour.t]; m.line = `Welcome to the ${T.name}! It's the ${T.rounds[m.tour.r]}, and ${o.first} from ${o.town} is on the mat against Little Beast. Whistle!`; }
+        else m.line = line('p1', o.first);
+        m.kind = ''; say(m.line); return newProblem();
+      }
+      case 'period': { const p = match.i / match.per + 1; sfx.whistle(); match.line = line(p === 2 ? 'p2' : 'p3', match.opp.first); match.kind = ''; say(match.line); return newProblem(); }
       case 'choose': { const st = curStep(); return submit(st.choices[Number(el.dataset.i)].v); }
       case 'key': return keyPress(el.dataset.k);
       case 'tip': match.cur.showTip = true; match.cur.hint = true; return render();
@@ -427,7 +479,7 @@
       case 'quit': if (quitArm) { quitArm = false; view = 'home'; match = null; if (window.speechSynthesis) window.speechSynthesis.cancel(); return render(); } quitArm = true; return render();
       case 'home': view = 'home'; match = null; render(); return window.scrollTo(0, 0);
       case 'locker': view = 'locker'; render(); return window.scrollTo(0, 0);
-      case 'rematch': return startMatch(match.cat);
+      case 'rematch': return match.tour ? startTournamentMatch() : startMatch(match.cat);
       case 'reset': if (resetArm) { state = fresh(); save(); resetArm = false; view = 'home'; return render(); } resetArm = true; return render();
       default:
     }
