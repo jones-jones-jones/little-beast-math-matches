@@ -22,7 +22,7 @@
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const pad2 = (n) => String(n).padStart(2, '0');
 
-  const NAMES = ['Maya', 'Diego', 'Jaylen', 'Priya', 'Owen', 'Sam', 'Tessa', 'Marcus', 'Lena', 'Ravi'];
+  const NAMES = ['Emma', 'Jack', 'Ava', 'Ben', 'Mia', 'Luke', 'Lily', 'Sam', 'Grace', 'Noah', 'Ella', 'Tom']; // short, familiar names
   const pickTwo = () => { const a = pick(NAMES); let b; do { b = pick(NAMES); } while (b === a); return [a, b]; };
 
   // ---------- step helpers ----------
@@ -160,7 +160,7 @@
       { txt: `The gym needs to seat ${P} fans. Each row seats ${b} fans. How many rows are needed?`, d: b, ans: a, unit: 'rows' },
       { txt: `${P} wrestlers split into ${a} equal teams. How many wrestlers are on each team?`, d: a, ans: b, unit: 'wrestlers' },
       { txt: `${P} medals are shared equally by ${a} teams. How many medals does each team get?`, d: a, ans: b, unit: 'medals' },
-      { txt: `Jaxson has ${P} daisies to plant in window boxes. Each window box holds ${b} flowers. How many window boxes does he need?`, d: b, ans: a, unit: 'window boxes' },
+      { txt: `Jack has ${P} daisies to plant in window boxes. Each window box holds ${b} flowers. How many window boxes does he need?`, d: b, ans: a, unit: 'window boxes' },
     ]);
     return {
       skill: 'story_div', prompt: t.txt,
