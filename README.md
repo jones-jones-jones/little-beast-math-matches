@@ -26,6 +26,8 @@ Alabama Local Open (3 rounds) > Southeast Regionals (4) > State Championships (4
 Win a match to advance a round. A loss = wrestlebacks: same round, new opponent, no penalty. Win the final to earn the title
 and unlock the next tournament. After Tulsa: "Start a new season". Bigger tournaments have a louder crowd cheer.
 Opponents are made-up first + last names with real hometowns; the announcer uses their first name.
+The Tulsa Nationals Championship Final is always against Bo Bassett (`finalOpp` in `TOURNAMENTS`); the other rounds are random.
+Score banners and announcer calls use real folkstyle moves (`MOVES` in `app.js`): takedowns (double leg, single leg, high crotch, ankle pick, fireman's carry, arm drag, snap down), reversals (switch, sit-out and turn, Granby roll), near falls (cradle, tilt, double arm bar, butcher block, half nelson, power half, far-side cradle), escapes (stand-up, sit-out, hip heist).
 
 **Match:** 12 problems = 3 periods of 4. First-try correct +2 (every 3rd in a row is a +3 near fall).
 Wrong first try = the announcer calls for a retry ("escape attempt", +1 if right). Two-choice questions get no retry.

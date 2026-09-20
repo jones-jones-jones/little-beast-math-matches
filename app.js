@@ -33,6 +33,7 @@
     { id: 'super32', name: 'Super 32', emoji: '⚡', title: 'Super 32 Champion', venue: 'a huge arena packed with fans', blurb: 'Top kids from all over the country', crowd: 1.15,
       rounds: ['Round of 32', 'Round of 16', 'Quarterfinal', 'Semifinal', 'Championship Final'], towns: ['Charlotte, NC', 'Richmond, VA', 'Lexington, KY', 'Columbus, OH', 'Franklin, TN', 'Indianapolis, IN', 'Pittsburgh, PA', 'Raleigh, NC'] },
     { id: 'nationals', name: 'Tulsa Nationals', emoji: '🏆', title: 'National Champion', venue: 'a giant arena in Tulsa, Oklahoma', blurb: 'The final tournament. The whole country is here', crowd: 1.3,
+      finalOpp: { first: 'Bo', last: 'Bassett', name: 'Bo Bassett', town: 'Top seed', face: '👦', seed: true },
       rounds: ['Round of 32', 'Round of 16', 'Quarterfinal', 'Semifinal', 'Championship Final'], towns: ['Stillwater, OK', 'Ames, IA', 'Lincoln, NE', 'State College, PA', 'Bozeman, MT', 'Fargo, ND', 'Boise, ID', 'Spokane, WA'] },
   ];
   const TRAINING_TOWNS = [].concat(...TOURNAMENTS.map((t) => t.towns));
@@ -102,38 +103,57 @@
     } catch (e) { /* ignore */ }
   }
 
-  const LINES = {
-    good: [
-      'Little Beast gets {o} in a cradle for back points!',
-      'Takedown, Little Beast! What a beautiful double leg!',
-      'Little Beast turns {o} with a half nelson!',
-      'What a switch by Little Beast! Reversal!',
-      'Little Beast sprawls, spins behind, and scores!',
-      'Look at that single leg! Little Beast finishes it!',
-      'Little Beast lifts {o} and returns him to the mat! The crowd is on its feet!',
-      'Little Beast is all over {o}! He rides him out beautifully!',
+  // Real folkstyle moves. Each has a banner name and an announcer call ({o} = opponent's first name).
+  const mv = (name, text) => ({ name, text });
+  const MOVES = {
+    takedown: [
+      mv('Double leg', 'Little Beast shoots a double leg on {o}! Takedown!'),
+      mv('Single leg', 'Look at that single leg! Little Beast finishes it and scores!'),
+      mv('High crotch', 'Little Beast drives through a high crotch on {o}! Two points!'),
+      mv('Ankle pick', 'Quick ankle pick by Little Beast! {o} hits the mat!'),
+      mv("Fireman's carry", "Fireman's carry! Little Beast puts {o} on the mat!"),
+      mv('Arm drag', 'Beautiful arm drag, and Little Beast is right behind {o}! Takedown!'),
+      mv('Snap down', 'Little Beast snaps {o} down and spins behind! Takedown!'),
+    ],
+    reversal: [
+      mv('Switch', 'What a switch by Little Beast! He reverses {o} and takes control!'),
+      mv('Sit-out and turn', 'Little Beast sits out, turns, and reverses {o}! Two points!'),
+      mv('Granby roll', 'Granby roll! Little Beast rolls right out and comes up on top of {o}!'),
     ],
     near: [
-      'Near fall! Little Beast has {o} on his back, and the ref is counting!',
-      'Little Beast is on a roll! A cradle, and {o} is in trouble!',
-      'Three in a row! Little Beast has {o} in big trouble on the mat!',
+      mv('Cradle', 'Little Beast gets {o} in a cradle for back points!'),
+      mv('Tilt', 'Little Beast sticks a tilt on {o}! Back points, and the ref is counting!'),
+      mv('Double arm bar', 'Double arm bar! Little Beast turns {o} onto his back for near fall!'),
+      mv('Butcher block', 'Little Beast locks up the butcher block and rolls {o} over! Near fall!'),
+      mv('Half nelson', 'Little Beast turns {o} with a half nelson! Back points!'),
+      mv('Power half', 'Big power half by Little Beast! {o} is going over!'),
+      mv('Far-side cradle', 'Far-side cradle! Little Beast has {o} in serious trouble!'),
     ],
     escape: [
-      'Little Beast fights free! He escapes for a point!',
-      'What a battle! Little Beast breaks the grip and gets away!',
-      'Little Beast gets out the back door! Escape, one point!',
+      mv('Stand-up', 'Little Beast stands up and breaks free! Escape, one point!'),
+      mv('Sit-out', 'Little Beast sits out and gets away from {o}! Escape!'),
+      mv('Hip heist', 'Nice hip heist by Little Beast! He slips out and escapes!'),
     ],
-    stuck: [
+    lost: [ // the opponent scores
+      mv('Double leg', '{o} shoots a double leg and gets it. Two points for {o}. Shake it off, Little Beast!'),
+      mv('Single leg', '{o} finishes a single leg. Little Beast, get back to your feet!'),
+      mv('High crotch', '{o} hits a high crotch and scores. Little Beast, this match is not over!'),
+      mv('Ankle pick', '{o} picks the ankle and scores. Little Beast, get back up and get after it!'),
+      mv('Arm drag', '{o} drags the arm and gets behind. Little Beast is a fighter, so back to the neutral position!'),
+    ],
+  };
+  const LINES = {
+    stuck: [ // the opponent has a hold on him and he gets a second try
       '{o} has Little Beast in a headlock. Let\'s see if he can get out of it!',
       '{o} is cranking a cross-face. Come on, Little Beast, think it through and try again!',
       '{o} has a tight waist on Little Beast. Can he fight off the hold?',
       '{o} shoots and grabs a leg! Can Little Beast sprawl and get out of it?',
       'Little Beast is on the bottom, and {o} has a ride. Stay calm, Little Beast, find the escape!',
-    ],
-    lost: [
-      '{o} finishes the takedown, two points. Shake it off, Little Beast, this match is not over!',
-      '{o} gets the takedown. Little Beast, get up and get back in there!',
-      'Little Beast gave up two, but he is a fighter! Back to your feet!',
+      '{o} is trying to tilt Little Beast! Can he fight it off and try again?',
+      '{o} threatens a double arm bar! Little Beast, stay tight and find a way out!',
+      '{o} has a front headlock. Little Beast, get those hips back and try again!',
+      'Careful, Little Beast! {o} is looking for the butcher block. Time to escape!',
+      '{o} has a half nelson in. Little Beast, bridge and fight your way out!',
     ],
     step: ['Nice move! Keep going, Little Beast!', 'He has the first part! Now finish it!', 'Good hand fighting, Little Beast! Stay on the attack!'],
     p1: ['Wrestlers are set. Period one. Whistle!', 'Little Beast and {o} shake hands. Here we go!'],
@@ -141,6 +161,7 @@
     p3: ['Third and final period! Everything is on the line!'],
     sudden: ['It is tied! Sudden victory! First score wins the match!'],
   };
+  const call = (mo, o) => mo.text.replace(/\{o\}/g, o);
   const line = (k, o) => pick(LINES[k]).replace(/\{o\}/g, o);
 
   // ---------------------------------------------------------------- match state
@@ -155,7 +176,8 @@
   const startMatch = (cat) => newMatch(cat, makeOpp(TRAINING_TOWNS), null); // training room / exhibition
   function startTournamentMatch() {
     const tr = state.trail; if (tr.t >= TOURNAMENTS.length) return;
-    newMatch('mix', makeOpp(TOURNAMENTS[tr.t].towns), { t: tr.t, r: tr.r });
+    const T = TOURNAMENTS[tr.t], isFinal = tr.r === T.rounds.length - 1;
+    newMatch('mix', T.finalOpp && isFinal ? Object.assign({}, T.finalOpp) : makeOpp(T.towns), { t: tr.t, r: tr.r });
   }
   const crowd = () => (match && match.tour ? TOURNAMENTS[match.tour.t].crowd : 0.8);
 
@@ -212,13 +234,13 @@
     let move, pts = 0, opp = 0;
     if (clean) {
       m.streak++; m.best = Math.max(m.best, m.streak); m.clean++;
-      if (m.streak % 3 === 0) { pts = 3; move = 'Near fall! +3'; m.line = line('near', o); }
-      else { pts = 2; move = pick(['Takedown! +2', 'Reversal! +2', 'Takedown! +2']); m.line = line('good', o); }
+      if (m.streak % 3 === 0) { const mo = pick(MOVES.near); pts = 3; move = `${mo.name}! Near fall +3`; m.line = call(mo, o); }
+      else { const rev = Math.random() < 0.25, mo = pick(rev ? MOVES.reversal : MOVES.takedown); pts = 2; move = `${mo.name}! ${rev ? 'Reversal' : 'Takedown'} +2`; m.line = call(mo, o); }
       m.kind = 'good'; sfx.cheer(crowd());
     } else if (allOk) {
-      m.streak = 0; pts = 1; move = 'Escape! +1'; m.line = line('escape', o); m.kind = 'good'; sfx.cheer(crowd());
+      m.streak = 0; { const mo = pick(MOVES.escape); pts = 1; move = `${mo.name}! Escape +1`; m.line = call(mo, o); } m.kind = 'good'; sfx.cheer(crowd());
     } else {
-      m.streak = 0; opp = 2; move = `${o} scores. +2`; m.line = line('lost', o); m.kind = 'bad'; sfx.groan();
+      m.streak = 0; { const mo = pick(MOVES.lost); opp = 2; move = `${o}: ${mo.name} +2`; m.line = call(mo, o); } m.kind = 'bad'; sfx.groan();
       m.missed.push({
         skill: SKILLS[c.p.skill].name,
         prompt: c.p.prompt.replace(/<span class="frac"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g, '$1/$2').replace(/<[^>]+>/g, ''),
@@ -265,7 +287,7 @@
     save();
     m.result = { win, pin, gain, adv, T };
     if (T) {
-      m.line = adv && adv.allDone ? `Little Beast is the ${T.title}! He wins the ${T.name}, and the whole arena is on its feet! What a season!`
+      m.line = adv && adv.allDone ? `Little Beast is the ${T.title}! He beats ${m.opp.name} and wins the ${T.name}, and the whole arena is on its feet! What a season!`
         : adv && adv.title ? `That's the title! Little Beast wins the ${T.name}! He is the ${T.title}!`
         : adv ? (pin ? `IT'S A PIN! Little Beast pins ${first} and moves on to the ${adv.next.round}!` : `That's the match! Little Beast beats ${first}, ${m.beast} to ${m.oppScore}, and moves on to the ${adv.next.round}!`)
         : `${first} takes this one, ${m.oppScore} to ${m.beast}. But Little Beast drops to the wrestlebacks, and he is still alive in this tournament!`;
@@ -467,7 +489,7 @@
       case 'season': state.trail = { t: 0, r: 0 }; state.seasons++; save(); return render();
       case 'whistle': {
         sfx.whistle(); const m = match, o = m.opp;
-        if (m.tour) { const T = TOURNAMENTS[m.tour.t]; m.line = `Welcome to the ${T.name}! It's the ${T.rounds[m.tour.r]}, and ${o.first} from ${o.town} is on the mat against Little Beast. Whistle!`; }
+        if (m.tour) { const T = TOURNAMENTS[m.tour.t]; m.line = `Welcome to the ${T.name}! It's the ${T.rounds[m.tour.r]}, and ${o.seed ? `top seed ${o.name}` : `${o.first} from ${o.town}`} is on the mat against Little Beast. Whistle!`; }
         else m.line = line('p1', o.first);
         m.kind = ''; say(m.line); return newProblem();
       }
