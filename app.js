@@ -7,7 +7,7 @@
   const pick = (a) => a[rnd(0, a.length - 1)];
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  const LOGO = `<img src="assets/logo.png" onerror="this.onerror=null;this.src='assets/logo.svg'" alt="Little Beast logo">`;
+  const LOGO = `<img src="assets/logo.png" alt="Little Beast logo">`;
 
   // ---------------------------------------------------------------- storage
   const KEY = 'lbmm.v1';

@@ -6,8 +6,8 @@ Progress (rank, XP, skill accuracy, medals) is saved in the browser on the devic
 ## Files
 - `index.html`, `style.css`, `app.js` — the game (screens, scoring, sounds, announcer)
 - `problems.js` — every problem type. One generator function per skill.
-- `assets/logo.svg` — stand-in drawing of his logo. Drop his real logo in as `assets/logo.png` and the app uses it automatically.
-- `assets/icon-180.png` — iPad home-screen icon (replace with a 180x180 PNG of the real logo).
+- `assets/logo.png` — his logo (512x512, shown on the home and weigh-in screens).
+- `assets/icon-180.png` — iPad home-screen icon and browser tab icon.
 
 ## Run it
     cd little-beast-math-matches
