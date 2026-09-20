@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Little Beast monogram">
+  <rect width="1024" height="1024" fill="#0f1b31"/>
+  <g fill="#e3b32a">
+    <!-- center cross -->
+    <path d="M468 105h100v18h-16v237h-68V123h-16z"/>
+    <path d="M468 890h100v-18h-16V755h-68v117h-16z"/>
+    <path d="M318 238h387v14h-24v46H342v-46h-24z"/>
+    <!-- left cross -->
+    <path d="M240 750l24-15V465h-99v-45h99v-95h42v95h39v45h-39v270l24 15z"/>
+    <!-- right cross -->
+    <path d="M784 750l-24-15V465h99v-45h-99v-95h-42v95h-39v45h39v270l-24 15z"/>
+    <!-- L -->
+    <path d="M345 380h100v310h100v45H330l15-15z"/>
+    <!-- B -->
+    <path fill-rule="evenodd" d="M485 380h120c62 0 92 32 92 78 0 40-24 64-58 74 48 10 70 44 70 88 0 68-46 108-118 108H485zM540 430v66h62c30 0 44-14 44-34s-14-32-44-32zM540 548v138h64c36 0 54-18 54-48 0-32-20-50-56-50z"/>
+  </g>
+</svg>
