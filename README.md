@@ -1,13 +1,25 @@
-# Little Beast Math Matches
+# Little Beast's Homework Throwdown
 
-Folkstyle-wrestling themed 3rd-grade math practice. Plain HTML/CSS/JS, no build step, no accounts.
+Folkstyle-wrestling themed 3rd-grade homework practice: math, spelling, and vocabulary. Plain HTML/CSS/JS, no build step, no accounts.
 Progress (rank, XP, skill accuracy, medals) is saved in the browser on the device it is played on.
 
 ## Files
-- `index.html`, `style.css`, `app.js` — the game (screens, scoring, sounds, announcer)
-- `problems.js` — every problem type. One generator function per skill.
-- `assets/logo.png` — his logo (512x512, shown on the home and weigh-in screens).
-- `assets/icon-180.png` — iPad home-screen icon and browser tab icon.
+- `index.html`, `style.css`, `app.js` — the game (screens, scoring, sounds, announcer, subjects, words screen)
+- `problems.js` — every math problem type (one generator per skill) and the skill picker
+- `words.js` — spelling and vocabulary problem types and the parsers for the word lists
+- `content.js` — the default word lists (this week's spelling + vocabulary, from the school sheets)
+- `assets/logo.png`, `assets/icon-180.png` — his logo and the iPad home-screen icon
+
+## Subjects
+Home has the combined **Tournament Trail** (mixes math, spelling, and vocabulary: about 60/20/20) and a **Pick a subject** row: Math (6 training rooms), Spelling, Vocabulary.
+**Spelling** gets harder as he goes: missing letters, then hear the word and pick the spelling, then hear it and type it.
+In a tournament the stage follows the round (early rounds easy, the final hardest); in the Spelling room and practice match it follows the period.
+**Vocabulary** is multiple choice (meaning, find the word, fill in the sentence) with a "hear it in a sentence" button.
+Words he misses come back more often. Spelling audio uses the iPad's built-in voice.
+
+## Every week
+Tap **This week's words** on the home screen, type or paste the new spelling list and vocabulary (`word (verb): meaning | sample sentence`), Save.
+It is stored on that iPad. To change the defaults that ship with the app, edit `content.js` (the sample sentences in it were written for reading aloud, not from the school).
 
 ## Run it
     cd little-beast-math-matches

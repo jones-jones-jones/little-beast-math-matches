@@ -1,4 +1,4 @@
-/* Little Beast Math Matches: problem generators.
+/* Little Beast's Homework Throwdown: problem generators.
  *
  * Every skill is one generator function that returns a problem:
  *   { skill, prompt (html), visual (html), steps: [...], tip, explain }
@@ -508,12 +508,12 @@
   // Catalog
   // =====================================================================
   const CATS = {
-    story: { name: 'Story Slam', emoji: '📖', blurb: 'Word problems' },
-    mult: { name: 'Multiplication Moves', emoji: '✖️', blurb: 'Facts, arrays, groups' },
-    div: { name: 'Division Drills', emoji: '➗', blurb: 'Divide and fact families' },
-    num: { name: 'Number Sense', emoji: '🔢', blurb: 'Adding, rounding, rules' },
-    shape: { name: 'Shapes & Fractions', emoji: '🔷', blurb: 'Name shapes, read fractions' },
-    meas: { name: 'Measure & Time', emoji: '⏱️', blurb: 'Volume and clocks' },
+    story: { name: 'Story Slam', emoji: '📖', blurb: 'Word problems', subject: 'math' },
+    mult: { name: 'Multiplication Moves', emoji: '✖️', blurb: 'Facts, arrays, groups', subject: 'math' },
+    div: { name: 'Division Drills', emoji: '➗', blurb: 'Divide and fact families', subject: 'math' },
+    num: { name: 'Number Sense', emoji: '🔢', blurb: 'Adding, rounding, rules', subject: 'math' },
+    shape: { name: 'Shapes & Fractions', emoji: '🔷', blurb: 'Name shapes, read fractions', subject: 'math' },
+    meas: { name: 'Measure & Time', emoji: '⏱️', blurb: 'Volume and clocks', subject: 'math' },
   };
 
   const SKILLS = {
@@ -545,14 +545,43 @@
     return p;
   }
 
-  // Weighted skill pick: word problems get extra weight in mixed matches,
-  // and skills he misses more often come up more often.
-  function pickSkill(catKey, stats, avoid) {
+  // ---------- word lists (spelling + vocabulary) are filled in by the app ----------
+  const words = { spelling: [], vocab: [], miss: {} };
+  const env = { speech: false };
+  function setWords(w) {
+    words.spelling = (w && w.spelling) || []; words.vocab = (w && w.vocab) || []; words.miss = (w && w.miss) || {};
+  }
+
+  const subjectOf = (id) => CATS[SKILLS[id].cat].subject;
+  function idsFor(scope) {
+    let ids = Object.keys(SKILLS).filter((id) => !SKILLS[id].avail || SKILLS[id].avail());
+    if (scope === 'math') ids = ids.filter((id) => subjectOf(id) === 'math');
+    else if (scope !== 'mix') ids = ids.filter((id) => SKILLS[id].cat === scope);
+    return ids;
+  }
+  const hasSkills = (scope) => idsFor(scope).length > 0;
+
+  // Weighted skill pick. scope = 'mix' (every subject), 'math' (all math), or one category key.
+  // Word problems get extra weight, and skills he misses more often come up more often.
+  function pickSkill(scope, stats, avoid, ctx) {
     stats = stats || {};
-    const ids = Object.keys(SKILLS).filter((id) => catKey === 'mix' || SKILLS[id].cat === catKey);
+    let ids = idsFor(scope);
+    if (scope === 'mix') { // math 60%, spelling 20%, vocabulary 20% (renormalized for whatever has content)
+      const W = { math: 0.6, spell: 0.2, vocab: 0.2 };
+      const subs = Array.from(new Set(ids.map(subjectOf)));
+      let r = Math.random() * subs.reduce((t, x) => t + W[x], 0), chosen = subs[subs.length - 1];
+      for (const x of subs) { r -= W[x]; if (r <= 0) { chosen = x; break; } }
+      ids = ids.filter((id) => subjectOf(id) === chosen);
+    }
+    // spelling skills belong to a stage (0 missing letters, 1 hear + pick, 2 hear + spell); math skills have none
+    if (ctx && ctx.stage != null) {
+      const staged = ids.filter((id) => SKILLS[id].stage === undefined || SKILLS[id].stage === ctx.stage);
+      if (staged.length) ids = staged;
+    }
+    if (!ids.length) return null;
     const weights = ids.map((id) => {
       let w = SKILLS[id].w || 1;
-      if (catKey === 'mix' && SKILLS[id].cat === 'story') w *= 2.2;
+      if ((scope === 'mix' || scope === 'math') && SKILLS[id].cat === 'story') w *= 2.2;
       const st = stats[id];
       if (st && st.a >= 3) w *= 1 + (1 - st.c / st.a) * 2;
       if (id === avoid) w *= 0.15;
@@ -563,7 +592,7 @@
     return ids[ids.length - 1];
   }
 
-  const api = { CATS, SKILLS, makeProblem, pickSkill };
+  const api = { CATS, SKILLS, makeProblem, pickSkill, hasSkills, words, env, setWords };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.LBM = api;
 })(typeof window !== 'undefined' ? window : globalThis);

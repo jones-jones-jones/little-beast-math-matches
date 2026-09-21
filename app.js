@@ -1,7 +1,8 @@
-/* Little Beast Math Matches: game logic and screens */
+/* Little Beast's Homework Throwdown: game logic and screens */
 (function () {
   'use strict';
-  const { CATS, SKILLS, makeProblem, pickSkill } = window.LBM;
+  const LBM = window.LBM;
+  const { CATS, SKILLS, makeProblem, pickSkill } = LBM;
   const $app = document.getElementById('app');
   const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
   const pick = (a) => a[rnd(0, a.length - 1)];
@@ -11,13 +12,26 @@
 
   // ---------------------------------------------------------------- storage
   const KEY = 'lbmm.v1';
-  const fresh = () => ({ xp: 0, matches: 0, wins: 0, pins: 0, bestStreak: 0, stats: {}, medals: {}, sound: true, voice: true, trail: { t: 0, r: 0 }, titles: [], seasons: 0 });
+  const fresh = () => ({ xp: 0, matches: 0, wins: 0, pins: 0, bestStreak: 0, stats: {}, medals: {}, sound: true, voice: true, trail: { t: 0, r: 0 }, titles: [], seasons: 0, words: null, wordMiss: {} });
   function load() {
     try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && typeof j === 'object') return Object.assign(fresh(), j); } catch (e) { /* ignore */ }
     return fresh();
   }
   let state = load();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+
+  // ---------------------------------------------------------------- this week's words (spelling + vocabulary)
+  // Default lists live in content.js; the "This week's words" screen saves the parent's own lists over them.
+  const CONTENT = window.LBM_CONTENT || { spelling: '', vocab: '' };
+  let wordsInfo = { sp: { items: [], warn: [] }, vo: { items: [], warn: [] } };
+  const wordsRaw = () => state.words || { spelling: CONTENT.spelling || '', vocab: CONTENT.vocab || '' };
+  function applyWords() {
+    const raw = wordsRaw();
+    wordsInfo = { sp: LBM.parseSpelling(raw.spelling), vo: LBM.parseVocab(raw.vocab) };
+    LBM.setWords({ spelling: wordsInfo.sp.items, vocab: wordsInfo.vo.items, miss: state.wordMiss });
+  }
+  LBM.env.speech = !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
+  applyWords();
 
   // ---------------------------------------------------------------- tournaments
   // The trail he works through, in order. Edit names/towns/rounds here.
@@ -142,6 +156,16 @@
       mv('Arm drag', '{o} drags the arm and gets behind. Little Beast is a fighter, so back to the neutral position!'),
     ],
   };
+  function speakWord(text, queue) {
+    try {
+      const s = window.speechSynthesis; if (!s || !text) return;
+      if (!queue) s.cancel();
+      const u = new SpeechSynthesisUtterance(text), vs = s.getVoices();
+      const v = vs.find((x) => /^en[-_]US/i.test(x.lang) && /(Samantha|Alex|Karen|Nicky|Aaron)/i.test(x.name)) || vs.find((x) => /^en[-_]US/i.test(x.lang)) || vs.find((x) => /^en/i.test(x.lang));
+      if (v) u.voice = v; u.rate = 0.85; u.pitch = 1; s.speak(u);
+    } catch (e) { /* ignore */ }
+  }
+
   const LINES = {
     stuck: [ // the opponent has a hold on him and he gets a second try
       '{o} has Little Beast in a headlock. Let\'s see if he can get out of it!',
@@ -168,6 +192,7 @@
   let view = 'home';
   let match = null;
   let quitArm = false, resetArm = false;
+  let boardMsg = '', boardDraft = null;
 
   function newMatch(cat, opp, tour) {
     match = { cat, opp, tour: tour || null, i: 0, total: 12, per: 4, beast: 0, oppScore: 0, streak: 0, best: 0, clean: 0, seen: new Set(), lastSkill: null, missed: [], cur: null, line: '', kind: '', pop: '' };
@@ -181,10 +206,19 @@
   }
   const crowd = () => (match && match.tour ? TOURNAMENTS[match.tour.t].crowd : 0.8);
 
-  function newProblem() {
+  // Spelling gets harder as he goes: missing letters first, then hear + pick, then hear + spell.
+  // In a tournament that follows the round (early rounds easy, the final hardest); otherwise it follows the period.
+  function currentStage() {
+    const m = match;
+    if (m.tour) { const T = TOURNAMENTS[m.tour.t]; return Math.min(2, Math.floor((3 * m.tour.r) / T.rounds.length)); }
+    return m.i >= 8 ? 2 : m.i >= 4 ? 1 : 0;
+  }
+
+  function newProblem(queue) {
     let p, tries = 0, key;
     do {
-      const id = pickSkill(match.cat, state.stats, match.lastSkill);
+      const id = pickSkill(match.cat, state.stats, match.lastSkill, { stage: currentStage() });
+      if (!id) { match = null; view = 'board'; boardMsg = "There is nothing to practice yet. Add this week's words first."; render(); return; }
       p = makeProblem(id);
       key = p.skill + p.prompt + JSON.stringify(p.steps.map((s) => s.answer));
       tries++;
@@ -193,6 +227,7 @@
     match.cur = { p, step: 0, tries: 0, phase: 'ask', input: '', wrong: [], results: [], hint: false, showTip: false, outcome: null, given: null };
     match.pop = '';
     view = 'play'; render(); window.scrollTo(0, 0);
+    if (p.audio) speakWord(p.audio, queue); // spelling words are read aloud as soon as the question appears
   }
 
   const curStep = () => match.cur.p.steps[match.cur.step];
@@ -200,14 +235,15 @@
 
   function stepAnswerText(st) {
     if (st.kind === 'num') return `${st.prefix || ''}${st.answer}${st.unit ? ' ' + st.unit : ''}`;
+    if (st.kind === 'text') return st.answer;
     const c = st.choices.find((x) => x.v === st.answer); return c ? c.text : st.answer;
   }
 
   function submit(val) {
     const c = match.cur, st = curStep();
     if (c.phase !== 'ask' && c.phase !== 'retry') return;
-    if (st.kind === 'num' && (val === '' || val == null)) return;
-    const ok = st.kind === 'num' ? Number(val) === st.answer : val === st.answer;
+    if ((st.kind === 'num' || st.kind === 'text') && (val === '' || val == null)) return;
+    const ok = st.kind === 'num' ? Number(val) === st.answer : st.kind === 'text' ? st.answers.includes(String(val).trim().toLowerCase()) : val === st.answer;
     c.given = val;
     const o = match.opp.first;
     if (ok) {
@@ -231,6 +267,11 @@
     const clean = allOk && c.results.every((r) => r.tries === 1) && !c.hint;
     const s = state.stats[c.p.skill] || (state.stats[c.p.skill] = { a: 0, c: 0 });
     s.a++; if (clean) s.c++;
+    if (c.p.word) { // words he misses come back more often; getting one right cools it down
+      const w = c.p.word;
+      if (clean) { if (state.wordMiss[w]) state.wordMiss[w] = Math.max(0, state.wordMiss[w] - 1); }
+      else if (!allOk) state.wordMiss[w] = (state.wordMiss[w] || 0) + 1;
+    }
     let move, pts = 0, opp = 0;
     if (clean) {
       m.streak++; m.best = Math.max(m.best, m.streak); m.clean++;
@@ -243,7 +284,7 @@
       m.streak = 0; { const mo = pick(MOVES.lost); opp = 2; move = `${o}: ${mo.name} +2`; m.line = call(mo, o); } m.kind = 'bad'; sfx.groan();
       m.missed.push({
         skill: SKILLS[c.p.skill].name,
-        prompt: c.p.prompt.replace(/<span class="frac"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g, '$1/$2').replace(/<[^>]+>/g, ''),
+        prompt: c.p.reviewPrompt || c.p.prompt.replace(/<span class="frac"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g, '$1/$2').replace(/<[^>]+>/g, ''),
         answer: c.p.steps.map(stepAnswerText).join(' → '),
         explain: c.p.explain,
       });
@@ -261,7 +302,7 @@
     }
     match.i++;
     if (match.i === match.total) {
-      if (match.beast === match.oppScore) { match.line = line('sudden', match.opp.first); match.kind = ''; sfx.whistle(); say(match.line); return newProblem(); }
+      if (match.beast === match.oppScore) { match.line = line('sudden', match.opp.first); match.kind = ''; sfx.whistle(); say(match.line); return newProblem(true); }
       return endMatch();
     }
     if (match.i > match.total) return endMatch();
@@ -275,7 +316,7 @@
     const gain = m.beast + (win ? 5 : 0) + (pin ? 10 : 0);
     state.xp += gain; state.matches++; if (win) state.wins++; if (pin) state.pins++;
     state.bestStreak = Math.max(state.bestStreak, m.best);
-    if (m.cat !== 'mix') { const lvl = m.clean >= m.total ? 3 : m.clean >= 11 ? 2 : m.clean >= 10 ? 1 : 0; if (lvl > (state.medals[m.cat] || 0)) state.medals[m.cat] = lvl; }
+    if (CATS[m.cat]) { const lvl = m.clean >= m.total ? 3 : m.clean >= 11 ? 2 : m.clean >= 10 ? 1 : 0; if (lvl > (state.medals[m.cat] || 0)) state.medals[m.cat] = lvl; }
     // tournament bracket: a win advances a round; a loss means the wrestlebacks (same round, new opponent)
     let adv = null;
     const T = m.tour ? TOURNAMENTS[m.tour.t] : null;
@@ -340,19 +381,52 @@
   }
 
   function homeHtml() {
-    const medal = (k) => ['', '🥉', '🥈', '🥇'][state.medals[k] || 0];
+    const nSp = LBM.words.spelling.length, nVo = LBM.words.vocab.length;
     return `${topbar()}
-      <div class="hero">${LOGO}<h1>Little Beast<span>Math Matches</span></h1><p>Folkstyle Edition</p></div>
+      <div class="hero">${LOGO}<h1>Little Beast's<span>Homework Throwdown</span></h1><p>Folkstyle Edition</p></div>
       ${trailHtml()}
-      <h2 class="section">Training rooms</h2>
-      <div class="grid">${Object.keys(CATS).map((k) => `<button class="room" data-act="cat" data-cat="${k}"><span class="em">${CATS[k].emoji}</span><span><b>${CATS[k].name}</b><small>${CATS[k].blurb}</small></span><span class="medal">${medal(k)}</span></button>`).join('')}</div>
-      <div style="margin-top:22px;display:grid;gap:12px"><button class="btn ghost" data-act="mix">🤼 Practice match (mixed)</button><button class="btn ghost" data-act="locker">🏆 Locker room</button></div>
+      <h2 class="section">Pick a subject</h2>
+      <div class="subjects">
+        <button class="subject" data-act="math"><span class="em">➕</span><b>Math</b><small>Word problems, multiplication, division and more</small></button>
+        <button class="subject" data-act="cat" data-cat="spell"><span class="em">🔤</span><b>Spelling</b><small>${nSp ? `${nSp} words this week` : "Add this week's words"}</small></button>
+        <button class="subject" data-act="cat" data-cat="vocab"><span class="em">📚</span><b>Vocabulary</b><small>${nVo ? `${nVo} words this week` : "Add this week's words"}</small></button>
+      </div>
+      <div style="margin-top:22px;display:grid;gap:12px">
+        <button class="btn ghost" data-act="board">✏️ This week's words</button>
+        <button class="btn ghost" data-act="mix">🤼 Practice match (all subjects)</button>
+        <button class="btn ghost" data-act="locker">🏆 Locker room</button></div>
       <div class="footer">Each match is 12 problems, 3 periods. Get them right to score!</div>`;
+  }
+
+  function mathHtml() {
+    const medal = (k) => ['', '🥉', '🥈', '🥇'][state.medals[k] || 0];
+    const rooms = Object.keys(CATS).filter((k) => CATS[k].subject === 'math').map((k) => `<button class="room" data-act="cat" data-cat="${k}"><span class="em">${CATS[k].emoji}</span><span><b>${CATS[k].name}</b><small>${CATS[k].blurb}</small></span><span class="medal">${medal(k)}</span></button>`).join('');
+    return `${topbar('<button class="btn ghost small" data-act="home" style="margin-right:auto">◀ Home</button>')}
+      <div class="hero"><h1>Math</h1></div>
+      <button class="btn big" data-act="cat" data-cat="math">All math mixed 🤼</button>
+      <h2 class="section">Training rooms</h2><div class="grid">${rooms}</div>`;
+  }
+
+  function boardHtml() {
+    const raw = boardDraft || wordsRaw(), info = wordsInfo;
+    const warns = info.sp.warn.concat(info.vo.warn);
+    return `${topbar('<button class="btn ghost small" data-act="home" style="margin-right:auto">◀ Home</button>')}
+      <div class="hero"><h1>This week's words</h1></div>
+      <p class="hint">Type or paste the lists from school. Spelling and vocabulary questions, and the tournament, all use these words.</p>
+      <label class="lbl" for="tb-sp">Spelling words <small>one per line, or separated by commas</small></label>
+      <textarea id="tb-sp" rows="8" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(raw.spelling)}</textarea>
+      <label class="lbl" for="tb-vo">Vocabulary <small>one per line: word (verb): meaning | a sample sentence</small></label>
+      <textarea id="tb-vo" rows="10" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(raw.vocab)}</textarea>
+      <div class="boardmsg ${boardMsg ? 'show' : ''}">${esc(boardMsg)}${warns.length ? '<br>' + warns.map(esc).join('<br>') : ''}</div>
+      <div style="display:grid;gap:12px;margin-top:14px">
+        <button class="btn big" data-act="saveboard">Save words</button>
+        <button class="btn ghost small" data-act="restore">Use the list that came with the app</button></div>
+      <p class="hint" style="margin-top:14px">Now saved: ${info.sp.items.length} spelling words and ${info.vo.items.length} vocabulary words. Vocabulary needs at least 4 words. The sample sentence is optional and is what the "hear it in a sentence" button reads.</p>`;
   }
 
   function introHtml() {
     const m = match, o = m.opp, T = m.tour ? TOURNAMENTS[m.tour.t] : null;
-    const title = T ? `${T.rounds[m.tour.r]}` : (m.cat === 'mix' ? 'Practice match' : CATS[m.cat].name);
+    const title = T ? `${T.rounds[m.tour.r]}` : (CATS[m.cat] ? CATS[m.cat].name : m.cat === 'math' ? 'Math practice' : 'Practice match');
     const banner = T ? `<div class="tbanner"><span>${T.emoji}</span><b>${T.name}</b><small>${esc(T.venue)}</small></div>` : '';
     return `${topbar()}<div class="stage">${banner}<h3 style="color:var(--gold)">${T ? 'Weigh-in' : 'Warm-up'}</h3><h2>${title}</h2>
       <div class="versus"><div class="fighter">${LOGO}<b>Little Beast</b><small>Alabama</small></div><div class="vs">VS</div>
@@ -374,7 +448,8 @@
     const fb = c.phase === 'fb', answering = !fb;
     let body = '';
     if (p.steps.length > 1) body += `<div class="stepn">Move ${c.step + 1} of ${p.steps.length}</div>`;
-    body += `<p class="prompt">${p.prompt}</p>${p.visual || ''}<div class="stepq">${esc(st.q)}</div>`;
+    const hearText = p.audio || p.hear;
+    body += `<p class="prompt">${p.prompt}</p>${p.visual || ''}${hearText ? `<div class="hearrow"><button class="btn ghost small" data-act="hear">🔊 ${esc(p.hearLabel || 'Hear it')}</button></div>` : ''}<div class="stepq">${esc(st.q)}</div>`;
     if (st.kind === 'choice') {
       const visual = st.choices.some((x) => x.html.indexOf('<svg') >= 0);
       const two = st.choices.length <= 2;
@@ -384,6 +459,14 @@
         if (fb && x.v === st.answer) cls = 'right';
         return `<button class="choice ${cls}" data-act="choose" data-i="${i}" ${(fb || c.wrong.includes(x.v)) ? 'disabled' : ''}>${x.html}</button>`;
       }).join('')}</div>`;
+    } else if (st.kind === 'text') {
+      const cls = fb ? (st.answers.includes(String(c.given).trim().toLowerCase()) ? 'right' : 'wrong') : '';
+      const key = (k) => `<button class="lkey" data-act="key" data-k="${k}">${k}</button>`;
+      const extra = /['-]/.test(st.answer) ? ["'", '-'] : [];
+      body += `<div class="numwrap"><div id="numdisp" class="numdisp textdisp ${cls}">${textText(fb ? c.given : c.input)}</div>
+        ${answering ? `<div class="letterpad"><div class="lrow">${'qwertyuiop'.split('').map(key).join('')}</div><div class="lrow">${'asdfghjkl'.split('').map(key).join('')}</div>
+        <div class="lrow">${'zxcvbnm'.split('').map(key).join('')}<button class="lkey back" data-act="key" data-k="back">⌫</button></div>
+        <div class="lrow">${extra.map(key).join('')}<button class="lkey go" data-act="key" data-k="go">GO</button></div></div>` : ''}</div>`;
     } else {
       const cls = fb ? (Number(c.given) === st.answer ? 'right' : 'wrong') : '';
       body += `<div class="numwrap"><div id="numdisp" class="numdisp ${cls}">${numText(st, c.input, fb ? c.given : null)}</div>
@@ -408,6 +491,7 @@
     return `${topbar(`<button class="btn ghost small" data-act="quit" style="margin-right:auto">${quitArm ? 'Tap again to quit' : '✕ Quit'}</button>`)}${board()}${ann()}<div class="card">${body}</div>`;
   }
 
+  const textText = (v) => (v ? esc(v) : '&nbsp;');
   function numText(st, input, given) {
     const v = given != null ? given : input;
     return `${st.prefix || ''}${v === '' ? '&nbsp;' : esc(v)}${st.unit ? `<span class="u">${esc(st.unit)}</span>` : ''}`;
@@ -454,24 +538,29 @@
   }
 
   function render() {
-    const html = view === 'home' ? homeHtml() : view === 'intro' ? introHtml() : view === 'play' ? playHtml()
-      : view === 'period' ? periodHtml() : view === 'result' ? resultHtml() : lockerHtml();
+    const tsp = document.getElementById('tb-sp'), tvo = document.getElementById('tb-vo'); // keep what is being typed
+    if (tsp && tvo) boardDraft = { spelling: tsp.value, vocab: tvo.value };
+    const html = view === 'home' ? homeHtml() : view === 'math' ? mathHtml() : view === 'board' ? boardHtml() : view === 'intro' ? introHtml()
+      : view === 'play' ? playHtml() : view === 'period' ? periodHtml() : view === 'result' ? resultHtml() : lockerHtml();
     $app.innerHTML = html;
   }
 
   // ---------------------------------------------------------------- input
   function keyPress(k) {
     const c = match && match.cur; if (view !== 'play' || !c || (c.phase !== 'ask' && c.phase !== 'retry')) return;
-    const st = curStep(); if (st.kind !== 'num') return;
+    const st = curStep(); if (st.kind === 'choice') return;
     if (k === 'go') return submit(c.input);
     if (k === 'back') c.input = c.input.slice(0, -1);
-    else if (c.input.length < 4) c.input = (c.input === '0' ? '' : c.input) + k;
+    else if (st.kind === 'num') { if (!/^\d$/.test(k)) return; if (c.input.length < 4) c.input = (c.input === '0' ? '' : c.input) + k; }
+    else { if (!/^[a-z'-]$/.test(k)) return; if (c.input.length < 24) c.input += k; }
     sfx.tap();
-    const d = document.getElementById('numdisp'); if (d) d.innerHTML = numText(st, c.input, null);
+    const d = document.getElementById('numdisp'); if (d) d.innerHTML = st.kind === 'num' ? numText(st, c.input, null) : textText(c.input);
   }
 
   document.addEventListener('keydown', (e) => {
+    if (e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName)) return; // typing in the words screen
     if (e.key >= '0' && e.key <= '9') keyPress(e.key);
+    else if (/^[a-zA-Z'-]$/.test(e.key)) keyPress(e.key.toLowerCase());
     else if (e.key === 'Backspace') keyPress('back');
     else if (e.key === 'Enter') { const c = match && match.cur; if (view === 'play' && c && c.phase === 'fb') act('next'); else keyPress('go'); }
   });
@@ -484,25 +573,36 @@
       case 'sound': state.sound = !state.sound; save(); return render();
       case 'voice': state.voice = !state.voice; if (!state.voice && window.speechSynthesis) window.speechSynthesis.cancel(); save(); return render();
       case 'mix': return startMatch('mix');
-      case 'cat': return startMatch(el.dataset.cat);
+      case 'cat':
+        if (!LBM.hasSkills(el.dataset.cat)) { view = 'board'; boardMsg = "Add this week's words to use this subject."; return render(); }
+        return startMatch(el.dataset.cat);
+      case 'math': view = 'math'; render(); return window.scrollTo(0, 0);
+      case 'board': boardMsg = ''; boardDraft = null; view = 'board'; render(); return window.scrollTo(0, 0);
+      case 'saveboard': {
+        const sp = document.getElementById('tb-sp'), vo = document.getElementById('tb-vo'); if (!sp || !vo) return;
+        state.words = { spelling: sp.value, vocab: vo.value }; boardDraft = null; applyWords(); save();
+        boardMsg = `Saved ${wordsInfo.sp.items.length} spelling words and ${wordsInfo.vo.items.length} vocabulary words.`; return render();
+      }
+      case 'restore': state.words = null; boardDraft = null; applyWords(); save(); boardMsg = 'Back to the list that came with the app.'; return render();
+      case 'hear': { const p = match && match.cur && match.cur.p; if (p) speakWord(p.audio || p.hear); return; }
       case 'continue': return startTournamentMatch();
       case 'season': state.trail = { t: 0, r: 0 }; state.seasons++; save(); return render();
       case 'whistle': {
         sfx.whistle(); const m = match, o = m.opp;
         if (m.tour) { const T = TOURNAMENTS[m.tour.t]; m.line = `Welcome to the ${T.name}! It's the ${T.rounds[m.tour.r]}, and ${o.seed ? `top seed ${o.name}` : `${o.first} from ${o.town}`} is on the mat against Little Beast. Whistle!`; }
         else m.line = line('p1', o.first);
-        m.kind = ''; say(m.line); return newProblem();
+        m.kind = ''; say(m.line); return newProblem(true);
       }
-      case 'period': { const p = match.i / match.per + 1; sfx.whistle(); match.line = line(p === 2 ? 'p2' : 'p3', match.opp.first); match.kind = ''; say(match.line); return newProblem(); }
+      case 'period': { const p = match.i / match.per + 1; sfx.whistle(); match.line = line(p === 2 ? 'p2' : 'p3', match.opp.first); match.kind = ''; say(match.line); return newProblem(true); }
       case 'choose': { const st = curStep(); return submit(st.choices[Number(el.dataset.i)].v); }
       case 'key': return keyPress(el.dataset.k);
       case 'tip': match.cur.showTip = true; match.cur.hint = true; return render();
       case 'next': if (match.cur.phase === 'fb') nextStepOrProblem(); return;
       case 'quit': if (quitArm) { quitArm = false; view = 'home'; match = null; if (window.speechSynthesis) window.speechSynthesis.cancel(); return render(); } quitArm = true; return render();
-      case 'home': view = 'home'; match = null; render(); return window.scrollTo(0, 0);
+      case 'home': view = 'home'; match = null; boardDraft = null; boardMsg = ''; render(); return window.scrollTo(0, 0);
       case 'locker': view = 'locker'; render(); return window.scrollTo(0, 0);
       case 'rematch': return match.tour ? startTournamentMatch() : startMatch(match.cat);
-      case 'reset': if (resetArm) { state = fresh(); save(); resetArm = false; view = 'home'; return render(); } resetArm = true; return render();
+      case 'reset': if (resetArm) { state = fresh(); applyWords(); save(); resetArm = false; view = 'home'; return render(); } resetArm = true; return render();
       default:
     }
   }
