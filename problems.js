@@ -10,7 +10,7 @@
  * to SKILLS below (pick a category and, optionally, a weight `w`).
  *
  * Math content below is Topic 3 (arrays, the Distributive Property, and
- * multi-step multiplication word problems), from the school Assessment Practice sheet.
+ * multi-step multiplication word problems), from the school Assessment Practice sheet and the Topic 3 Performance Task (School Fair / Bake Sale).
  */
 (function (root) {
   'use strict';
@@ -56,12 +56,19 @@
   }
 
   // ---------- SVG helper ----------
-  function dotsSvg(rows, cols) {
-    const g = 30, r = 10;
-    let out = `<svg viewBox="0 0 ${cols * g + 8} ${rows * g + 8}" width="${cols * g + 8}" height="${rows * g + 8}" aria-hidden="true">`;
-    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) {
-      out += `<circle cx="${4 + g / 2 + j * g}" cy="${4 + g / 2 + i * g}" r="${r}" fill="#0f1b31"/>`;
+  // opts.split = number of rows above a dashed line (bottom part drawn in orange);
+  // opts.ghost = number of extra empty rows drawn under the array (rows still to be added).
+  function dotsSvg(rows, cols, opts) {
+    opts = opts || {};
+    const g = 30, r = 10, ghost = opts.ghost || 0, split = opts.split || 0, total = rows + ghost;
+    const w = cols * g + 8, h = total * g + 8;
+    let out = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">`;
+    for (let i = 0; i < total; i++) for (let j = 0; j < cols; j++) {
+      const cx = 4 + g / 2 + j * g, cy = 4 + g / 2 + i * g;
+      if (i >= rows) out += `<circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="none" stroke="#d9822b" stroke-width="2.5" stroke-dasharray="4 3"/>`;
+      else out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${split && i >= split ? '#d9822b' : '#0f1b31'}"/>`;
     }
+    if (split) out += `<line x1="0" y1="${4 + split * g}" x2="${w}" y2="${4 + split * g}" stroke="#c0392b" stroke-width="3" stroke-dasharray="7 5"/>`;
     return out + '</svg>';
   }
 
@@ -234,20 +241,145 @@
     };
   }
 
-  function tensAsFives() {
-    const n = rnd(2, 9), P = 10 * n;
-    const correct = `5 × ${n} and 5 × ${n}`;
+  function tensAsFives() { // a bigger fact split into two equal smaller facts (10s as 5s most often)
+    const f = pick([10, 10, 10, 8, 8, 6, 4]), h = f / 2, n = rnd(2, 9), P = f * n, H = h * n;
+    const correct = `${h} × ${n} and ${h} × ${n}`;
     const wrongs = [
-      `5 × ${n} and 5 × ${n + 1}`,
+      `${h} × ${n} and ${h} × ${n + 1}`,
       `${n + 1} × ${n + 1} and ${n + 1} × ${n + 1}`,
-      `10 × ${n} and 1 × ${n}`,
+      `${f} × ${n} and 1 × ${n}`,
+      `${h} × ${n} and ${h + 1} × ${n}`,
     ];
     return {
-      skill: 'tens_fives', prompt: `Jeff says a 10s fact can be broken into two 5s facts. Which two 5s facts match 10 × ${n}?`,
-      visual: `<div class="bigeq">10 × ${n} = ?</div>`,
-      steps: [choiceStep('Pick the two 5s facts.', correct, wrongs)],
-      tip: `Remember 10 is 5 + 5. So 10 × ${n} is the same as 5 × ${n} added to itself. Work out 5 × ${n} = ${5 * n} once, then double it to check: ${5 * n} + ${5 * n} = ${10 * n}.`,
-      explain: `5 × ${n} = ${5 * n}. ${5 * n} + ${5 * n} = ${P}, which is 10 × ${n}.`,
+      skill: 'tens_fives',
+      prompt: f === 10 ? `Jeff says a 10s fact can be broken into two 5s facts. Which two 5s facts match 10 × ${n}?`
+        : `Jeff says a ${f}s fact can be broken into two ${h}s facts. Which two ${h}s facts match ${f} × ${n}?`,
+      visual: `<div class="bigeq">${f} × ${n} = ?</div>`,
+      steps: [choiceStep(`Pick the two ${h}s facts.`, correct, wrongs)],
+      tip: `Remember ${f} is ${h} + ${h}. So ${f} × ${n} is the same as ${h} × ${n} added to itself. Work out ${h} × ${n} = ${H} once, then double it to check: ${H} + ${H} = ${P}.`,
+      explain: `${h} × ${n} = ${H}. ${H} + ${H} = ${P}, which is ${f} × ${n}.`,
+    };
+  }
+
+  // =====================================================================
+  // TOPIC 3 PERFORMANCE TASK: growing / splitting arrays, table stories
+  // =====================================================================
+  const ARRAY_SCENES = [
+    (n, R, C) => ({ txt: `${n} sets up chairs for the school band in a ${R} × ${C} array.`, unit: 'chairs' }),
+    (n, R, C) => ({ txt: `Coach Bell lines up wrestling shoes in a ${R} × ${C} array.`, unit: 'shoes' }),
+    (n, R, C) => ({ txt: `${n} puts trophies on shelves in a ${R} × ${C} array.`, unit: 'trophies' }),
+    (n, R, C) => ({ txt: `The team sets out cones in a ${R} × ${C} array.`, unit: 'cones' }),
+  ];
+
+  // "Add to the array to show how the new array will look."
+  function arrayGrow() {
+    const C = rnd(3, 9), R = rnd(2, 5);
+    let R2; if (Math.random() < 0.5 && R * 2 <= 9) R2 = R * 2; else R2 = R + rnd(1, Math.min(4, 9 - R));
+    const add = R2 - R, n = pick(NAMES), sc = pick(ARRAY_SCENES)(n, R, C), P = R2 * C;
+    return {
+      skill: 'array_grow', prompt: `${sc.txt} ${n} wants a ${R2} × ${C} array instead. The empty dotted circles show where the new rows go.`,
+      visual: `<div class="viz">${dotsSvg(R, C, { ghost: add })}<div class="cap">${R} × ${C} now, ${R2} × ${C} wanted</div></div>`,
+      steps: [
+        numStep(`How many rows does ${n} add?`, add, { unit: 'rows' }),
+        numStep(`How many ${sc.unit} are in the new ${R2} × ${C} array?`, P, { unit: sc.unit }),
+      ],
+      tip: `The columns stay ${C}. Count the rows you have (${R}) and the rows you want (${R2}); the difference is how many rows to add. Then multiply the new number of rows by ${C}.`,
+      explain: `${R2} − ${R} = ${add} more rows. The new array is ${R2} × ${C} = ${P}.`,
+    };
+  }
+
+  // "Draw a line to split the array. Write a fact for each new array. Use the facts to find the total."
+  function arraySplitTotal() {
+    const R = rnd(4, 9), C = rnd(3, 9), R1 = rnd(1, R - 1), R2 = R - R1, P = R * C;
+    const unit = pick(['chairs', 'dots', 'cones', 'muffins']);
+    return {
+      skill: 'array_split', prompt: 'The line splits the array into two smaller arrays. Use a multiplication fact for each one to find the total.',
+      visual: `<div class="viz">${dotsSvg(R, C, { split: R1 })}<div class="cap">${R1} rows on top, ${R2} rows on the bottom</div></div>`,
+      steps: [
+        numStep(`Top array: ${R1} × ${C} = ?`, R1 * C),
+        numStep(`Bottom array: ${R2} × ${C} = ?`, R2 * C),
+        numStep(`Add the two facts. How many ${unit} in all?`, P, { unit }),
+      ],
+      tip: `Each part is its own array. Multiply the rows in that part by ${C}. Then add the two answers to get the total for the whole array.`,
+      explain: `${R1} × ${C} = ${R1 * C} and ${R2} × ${C} = ${R2 * C}. ${R1 * C} + ${R2 * C} = ${P}, the same as ${R} × ${C}.`,
+    };
+  }
+
+  // "Break the array into 2 arrays that look the same. Use the half fact to find the total."
+  function arrayHalves() {
+    let R, C; do { R = pick([4, 6, 8]); C = rnd(3, 9); } while (R === C);
+    const half = R / 2, H = half * C, P = R * C, n = pick(NAMES);
+    const unit = pick(['muffins', 'chairs', 'cookies', 'trophies']);
+    const correct = `${half} × ${C}`;
+    return {
+      skill: 'array_halves', prompt: `${n} has a ${R} × ${C} array of ${unit}. ${n} breaks it into 2 arrays that look the same, and knows ${half} × ${C} = ${H}.`,
+      visual: `<div class="viz">${dotsSvg(R, C, { split: half })}<div class="cap">Two arrays that look the same</div></div>`,
+      steps: [
+        choiceStep('What size is each smaller array?', correct, [`${R} × ${half}`, `${half} × ${R}`, `${C} × ${C}`, `${R} × ${C}`]),
+        numStep(`Two arrays that look the same. How many ${unit} in all?`, P, { unit }),
+      ],
+      tip: `Half of the ${R} rows is ${half} rows, so each smaller array is ${half} × ${C}. Both arrays are the same, so the total is that fact twice: ${H} + ${H}.`,
+      explain: `Each smaller array is ${half} × ${C} = ${H}. ${H} + ${H} = ${P}, which is ${R} × ${C}.`,
+    };
+  }
+
+  // The "Bake Sale" table from the Performance Task.
+  const BAKE = [
+    { name: 'Blueberry Muffins', unit: 'muffins' },
+    { name: 'Strawberry Tarts', unit: 'tarts' },
+    { name: 'Granola Bars', unit: 'granola bars' },
+  ];
+  function bakeTable(rows) {
+    const tr = rows.map((x) => `<tr><td>${x.name}</td><td>${x.trays}</td><td>${x.per}</td><td>$${x.cost}</td></tr>`).join('');
+    return `<div class="viz"><table class="ftable bake"><caption>Bake Sale</caption>` +
+      `<tr><th>Baked Goods</th><th>Number of Trays</th><th>Number on Each Tray</th><th>Cost per Tray</th></tr>${tr}</table></div>`;
+  }
+
+  function storyBake() {
+    const rows = shuffle(BAKE).map((b) => ({ name: b.name, unit: b.unit, trays: rnd(3, 8), per: rnd(4, 9), cost: rnd(2, 6) }));
+    const x = pick(rows), variant = pick(['twice', 'friends', 'count']);
+    const lead = 'Use the Bake Sale table. ';
+    if (variant === 'twice') { // some trays in the morning and the same number in the afternoon
+      const half = rnd(2, 4), T = half * 2, P = T * x.cost;
+      x.trays = T;
+      return {
+        skill: 'story_table', prompt: `${lead}Ben sells ${half} trays of ${x.name.toLowerCase()} in the morning and ${half} trays in the afternoon. How much money does this raise?`,
+        visual: bakeTable(rows),
+        steps: [
+          numStep('How many trays does Ben sell in all?', T, { unit: 'trays' }),
+          numStep(`Now use the cost per tray. How much money is raised?`, P, { prefix: '$' }),
+        ],
+        tip: `First add the morning and afternoon trays: ${half} + ${half}. Then look at the "Cost per Tray" column for ${x.name.toLowerCase()} and multiply the trays by it.`,
+        explain: `${half} + ${half} = ${T} trays. ${T} × $${x.cost} = $${P}.`,
+      };
+    }
+    if (variant === 'friends') { // each friend buys the same number of trays; compare to a total
+      const k = rnd(2, 4), T = k * 2, P = T * x.cost;
+      let X; do { X = P + pick([-1, 1]) * rnd(2, 6); } while (X < 5);
+      const agree = P > X;
+      return {
+        skill: 'story_table', prompt: `${lead}Two friends each bought ${k} trays of ${x.name.toLowerCase()}. Ben says they spent more than $${X} in total. Do you agree?`,
+        visual: bakeTable(rows),
+        steps: [
+          numStep('How many trays did the two friends buy in all?', T, { unit: 'trays' }),
+          numStep('How much did they spend in total?', P, { prefix: '$' }),
+          choiceStep(`Ben says more than $${X}. Do you agree?`, agree ? 'Yes, I agree' : 'No, I disagree', [agree ? 'No, I disagree' : 'Yes, I agree'], 2),
+        ],
+        tip: `Two friends each bought ${k} trays, so add ${k} + ${k} for the trays. Multiply by the cost per tray in the table. Then compare your total to $${X}.`,
+        explain: `${k} + ${k} = ${T} trays. ${T} × $${x.cost} = $${P}. $${P} is ${agree ? 'more' : 'not more'} than $${X}, so ${agree ? 'Ben is right' : 'Ben is not right'}.`,
+      };
+    }
+    const T = x.trays, P = T * x.per; // how many baked goods in all
+    return {
+      skill: 'story_table', prompt: `${lead}How many ${x.unit} does Ben have to sell in all?`,
+      visual: bakeTable(rows),
+      steps: [
+        choiceStep('Which number sentence uses the right numbers from the table?', `${T} × ${x.per}`,
+          [`${T} × $${x.cost}`, `${x.per} × $${x.cost}`, `${T} + ${x.per}`]),
+        numStep(`Solve it: ${T} × ${x.per} = ?`, P, { unit: x.unit }),
+      ],
+      tip: `Find the row for ${x.name.toLowerCase()}. Multiply "Number of Trays" by "Number on Each Tray." Don't use the cost. That column is for money.`,
+      explain: `${T} trays with ${x.per} on each tray: ${T} × ${x.per} = ${P} ${x.unit}.`,
     };
   }
 
@@ -264,13 +396,17 @@
     story_mult: { name: 'Multiplication stories', cat: 'story', gen: storyMult },
     story_three: { name: 'Multi-step stories', cat: 'story', gen: storyThreeFactor },
     story_rate: { name: 'Rental & money stories', cat: 'story', gen: storyRate },
+    story_table: { name: 'Table stories (Bake Sale)', cat: 'story', gen: storyBake },
     array_total: { name: 'Array totals', cat: 'array', gen: arrayTotal },
     array_break: { name: 'Break apart arrays', cat: 'array', gen: arrayBreakApart },
     array_combine: { name: 'Combine arrays', cat: 'array', gen: arrayCombine },
     array_commute: { name: 'Turn the array around', cat: 'array', gen: arrayCommute },
+    array_grow: { name: 'Grow the array', cat: 'array', gen: arrayGrow },
+    array_split: { name: 'Split the array, add the facts', cat: 'array', gen: arraySplitTotal },
+    array_halves: { name: 'Two arrays that look the same', cat: 'array', gen: arrayHalves },
     dist_check: { name: 'Check the equation', cat: 'dist', gen: distributiveCheck },
     facts_product: { name: 'Facts for a product', cat: 'dist', gen: factsForProduct },
-    tens_fives: { name: '10s facts as 5s facts', cat: 'dist', gen: tensAsFives },
+    tens_fives: { name: 'Split a fact in half', cat: 'dist', gen: tensAsFives },
   };
 
   function makeProblem(skillId) {

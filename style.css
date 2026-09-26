@@ -120,6 +120,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .ftable { border-collapse: collapse; margin: 6px auto; font-size: 1.4rem; }
 .ftable th, .ftable td { border: 3px solid var(--navy); padding: 6px 26px; text-align: center; min-width: 110px; }
 .ftable th { background: var(--gold2); }
+.ftable.bake { font-size: 1.05rem; }
+.ftable.bake th, .ftable.bake td { padding: 5px 12px; min-width: 0; }
+.ftable.bake caption { font-family: var(--display); font-size: 1.5rem; padding-bottom: 4px; color: var(--navy); }
 .nline { position: relative; height: 96px; margin: 10px 24px 4px; }
 .nl-bar { position: absolute; left: 5%; right: 5%; top: 54px; height: 6px; background: var(--navy); border-radius: 3px; }
 .nl-tick { position: absolute; top: 44px; transform: translateX(-50%); text-align: center; }

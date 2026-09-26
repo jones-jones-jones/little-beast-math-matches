@@ -8,6 +8,7 @@ Progress (rank, XP, skill accuracy, medals) is saved in the browser on the devic
 - `problems.js` — every math problem type (one generator per skill) and the skill picker
 - `words.js` — spelling and vocabulary problem types and the parsers for the word lists
 - `content.js` — the default word lists (this week's spelling + vocabulary, from the school sheets)
+- `sw.js` — offline support (caches the app after one online visit; bump `VERSION` in it to force a fresh cache)
 - `assets/logo.png`, `assets/icon-180.png` — his logo and the iPad home-screen icon
 
 ## Subjects
@@ -20,6 +21,9 @@ Words he misses come back more often. Spelling audio uses the iPad's built-in vo
 ## Every week
 Tap **This week's words** on the home screen, type or paste the new spelling list and vocabulary (`word (verb): meaning | sample sentence`), Save.
 It is stored on that iPad. To change the defaults that ship with the app, edit `content.js` (the sample sentences in it were written for reading aloud, not from the school).
+
+## Offline (car trips, no signal)
+Open the live site once on Wi-Fi, then Share > Add to Home Screen and launch it from that icon. It caches itself and runs with no connection; progress stays on the iPad. Spelling audio uses the iPad's built-in voice, so it works offline too. Updates arrive the next time it is opened with a connection.
 
 ## Run it
     cd little-beast-math-matches
