@@ -7,25 +7,26 @@
  * be read aloud and are not from the school, so edit them freely.
  */
 (typeof window !== 'undefined' ? window : globalThis).LBM_CONTENT = {
-  week: 'Silent letters and irregular plurals',
+  week: 'Long e, contractions, and possessive nouns; weather technology vocabulary',
   spelling: [
-    'phone', 'teeth', 'wrote', 'phase', 'crumb',
-    'oxen', 'knife', 'fish', 'limb', 'children',
-    'knocking', 'mice', 'wrinkle', 'whale', 'cacti',
-    'women', 'deer', 'people',
+    'seam', "mother's", "we'll", 'piece', 'really',
+    "she'd", "doesn't", 'meet', "wasn't", 'alley',
+    'plates', 'street', 'honey', "it's", "i've",
+    // Challenge words
+    "o'clock", 'timidly', "shouldn't",
   ].join('\n'),
   vocab: [
-    'douse (verb): throw a liquid on | The firefighter used a hose to douse the flames.',
-    'drive (verb): prod animals into moving in a desired direction | The cowboys drive the cattle across the field.',
-    'guard (verb): keep safe from harm or danger | The big dog will guard the house.',
-    "heart (noun): one's innermost feelings or spirit | She has a kind heart and loves to help others.",
-    'homestead (noun): a house and the farmland it is on | Grandpa\'s homestead has a red barn and wide fields.',
-    'pack (noun): a group of animals that are alike | A pack of wolves ran through the forest.',
-    'parched (adjective): very dry | The land was parched because it had not rained for weeks.',
-    'sod (noun): a cut layer of soil with grass growing on it | Dad laid fresh sod to make a new lawn.',
-    'thrust (verb): push with force | She thrust the heavy door open with her shoulder.',
-    'trudged (verb): walked slowly and with effort | The tired hikers trudged up the steep hill.',
-    'waste (verb): spend or use foolishly | Do not waste water, so turn off the tap.',
-    'yards (noun): measures of length equal to about three feet | A football field is one hundred yards long.',
+    'anchor (verb): fasten in place | The sailors drop the anchor to fasten the boat in place.',
+    'cover (noun): protection or shelter | The old barn gave the hikers cover from the storm.',
+    'forecast (verb): to tell what may or will happen | The meteorologist will forecast rain for the weekend.',
+    'gain (verb): something that is gotten, earned, or won | Little Beast worked hard to gain a takedown in the match.',
+    'hazard (noun): a source of danger, harm, or loss | Ice on the road is a hazard for drivers.',
+    'media (noun): the press or broadcasting companies communicating with many people | The local media reported on the big storm.',
+    'mobile (adjective): capable of moving or being moved | The weather van is mobile, so it can drive right up to a storm.',
+    'navigate (verb): to plan or direct the course of | The pilot will navigate the plane around the storm clouds.',
+    'pastime (noun): something that makes time pass pleasantly | Wrestling is Little Beast\'s favorite pastime.',
+    'scene (noun): the place where an action or event occurs or has occurred | Reporters rushed to the scene of the tornado.',
+    'serious (adjective): causing concern or anxiety | A serious storm was heading straight for the town.',
+    'transmit (verb): to send or communicate | The weather satellite can transmit data back to scientists on the ground.',
   ].join('\n'),
 };
