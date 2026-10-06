@@ -17,11 +17,14 @@
   const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const dashed = (w) => w.split('').join('-');
+  // iPad/iOS auto-converts a typed ' into a curly quote (smart punctuation). Words like "we'll" or
+  // "mother's" still need to match the plain apostrophe the on-screen keyboard types, so normalize on the way in.
+  const normApos = (s) => String(s).replace(/[‘’ʼ′´`]/g, "'");
 
   // ------------------------------------------------------------------ parsing what the parent types
   function parseSpelling(text) {
     const items = [], warn = [], seen = new Set();
-    String(text || '').split(/\r?\n/).forEach((line) => {
+    normApos(text || '').split(/\r?\n/).forEach((line) => {
       line = line.trim(); if (!line) return;
       const parts = line.includes('|')
         ? [{ w: line.split('|')[0], s: line.split('|').slice(1).join('|').trim() }]
@@ -44,7 +47,7 @@
 
   function parseVocab(text) {
     const items = [], warn = [], seen = new Set();
-    String(text || '').split(/\r?\n/).forEach((line) => {
+    normApos(text || '').split(/\r?\n/).forEach((line) => {
       line = line.trim(); if (!line) return;
       const m = line.match(/^(?:\d+[.)]\s*)?([A-Za-z][A-Za-z'-]*)\s*(?:\(([A-Za-z. ]+)\))?\s*(?::|=|\s[-–—]\s)\s*(.+)$/);
       if (!m) { warn.push(`Skipped "${line.slice(0, 40)}" (use: word (verb): meaning | sample sentence)`); return; }
@@ -106,33 +109,59 @@
     return cur.length >= 3 ? cur : misspellings(w, all);
   };
 
-  // A letter worth blanking: silent letters first (kn-, wr-, -mb, ph, gh, wh), otherwise any inside letter.
-  function blankIndex(w) {
-    const spots = [];
+  // A span worth blanking: silent letters first (kn-, wr-, -mb, ph, gh, wh), otherwise any inside span.
+  // Short words (<=4 letters) blank 1 letter; longer words blank 2, for more of a challenge.
+  function blankSpan(w) {
+    const letterLen = w.replace(/[^a-z]/g, '').length, len = letterLen <= 4 ? 1 : 2;
+    const spots = []; // candidate start indexes for a 2-letter silent-pattern span
     if (/^kn/.test(w)) spots.push(0);
     if (/^wr/.test(w)) spots.push(0);
-    if (/mb$/.test(w)) spots.push(w.length - 1);
-    const ph = w.indexOf('ph'); if (ph >= 0) spots.push(ph + 1);
-    const gh = w.indexOf('gh'); if (gh >= 0) spots.push(gh + 1);
+    if (/mb$/.test(w)) spots.push(w.length - 2);
+    const ph = w.indexOf('ph'); if (ph >= 0) spots.push(ph);
+    const gh = w.indexOf('gh'); if (gh >= 0) spots.push(gh);
     const wh = w.indexOf('wh'); if (wh >= 0) spots.push(wh);
-    if (spots.length && Math.random() < 0.65) return pick(spots);
-    const letters = []; for (let i = 0; i < w.length; i++) if (/[a-z]/.test(w[i])) letters.push(i);
-    return pick(letters.slice(w.length > 3 ? 1 : 0));
+    if (len === 2 && spots.length && Math.random() < 0.65) return { start: pick(spots), len: 2 };
+    const minStart = w.length > 3 ? 1 : 0, candidates = [];
+    for (let i = minStart; i <= w.length - len; i++) {
+      let ok = true;
+      for (let j = 0; j < len; j++) if (!/[a-z]/.test(w[i + j])) { ok = false; break; } // never blank the apostrophe
+      if (ok) candidates.push(i);
+    }
+    return { start: pick(candidates.length ? candidates : [0]), len };
+  }
+
+  // Plausible wrong letter-groups the same length as the real one (for the 2-letter blank).
+  function spanDistractors(target) {
+    const consonants = 'bcdfghjklmnpqrstvwxyz'.split(''), vowels = 'aeiou'.split('');
+    const poolFor = (c) => (vowels.includes(c) ? vowels : consonants);
+    const out = new Set();
+    const rev = target.split('').reverse().join(''); if (rev !== target) out.add(rev);
+    for (let i = 0; i < target.length; i++) {
+      for (const c of poolFor(target[i])) {
+        if (c === target[i]) continue;
+        out.add(target.slice(0, i) + c + target.slice(i + 1));
+      }
+    }
+    return Array.from(out);
   }
 
   const spellTip = 'Say the word out loud. Some letters are silent! Tap the speaker to hear it again.';
 
   // ------------------------------------------------------------------ SPELLING
   function spellMissing() {
-    const e = pickEntry(sp(), (x) => x.w.length >= 3); const w = e.w, i = blankIndex(w), letter = w[i];
-    const vowel = 'aeiou'.includes(letter);
-    const pool = vowel ? 'aeiou'.split('') : 'bcdfghjklmnprstwyk'.split('').concat(['n', 'g']);
-    const pat = w.split('').map((c, k) => (k === i ? '<span class="blank">_</span>' : esc(c))).join('');
+    const e = pickEntry(sp(), (x) => x.w.replace(/[^a-z]/g, '').length >= 3);
+    const w = e.w, { start, len } = blankSpan(w), target = w.slice(start, start + len);
+    const pat = w.split('').map((c, k) => (k >= start && k < start + len ? '<span class="blank">_</span>' : esc(c))).join('');
+    const wrongs = len === 1
+      ? ('aeiou'.includes(target) ? 'aeiou'.split('') : 'bcdfghjklmnprstwyk'.split('').concat(['n', 'g'])).filter((c) => c !== target)
+      : spanDistractors(target);
     return {
       skill: 'spell_missing', word: e.w, audio: e.w, hearLabel: 'Hear the word',
-      prompt: 'Fill in the missing letter.', visual: `<div class="wordpat">${pat}</div>`,
-      steps: [choiceStep('Which letter is missing?', letter, pool.filter((c) => c !== letter), 4)],
-      tip: spellTip, explain: `The word is spelled ${dashed(w)}.`, reviewPrompt: `Fill in the missing letter of "${w}".`,
+      prompt: len === 1 ? 'Fill in the missing letter.' : 'Fill in the missing letters.',
+      visual: `<div class="wordpat">${pat}</div>`,
+      steps: [choiceStep(len === 1 ? 'Which letter is missing?' : 'Which letters are missing?', target, wrongs, 4)],
+      tip: spellTip, explain: `The word is spelled ${dashed(w)}.`,
+      reviewPrompt: `Fill in the missing letter${len === 1 ? '' : 's'} of "${w}".`,
     };
   }
 
