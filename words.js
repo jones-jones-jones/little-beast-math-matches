@@ -113,6 +113,14 @@
   // Short words (<=4 letters) blank 1 letter; longer words blank 2, for more of a challenge.
   function blankSpan(w) {
     const letterLen = w.replace(/[^a-z]/g, '').length, len = letterLen <= 4 ? 1 : 2;
+    const aIdx = w.indexOf("'");
+    // Contractions/possessives: the apostrophe itself (where it goes) is the actual skill being tested,
+    // so make it a likely blank — on its own, or paired with the letter next to it.
+    if (aIdx >= 0 && Math.random() < 0.55) {
+      if (len === 1) return { start: aIdx, len: 1 };
+      const start = aIdx > 0 && Math.random() < 0.5 ? aIdx - 1 : aIdx;
+      return { start: Math.max(0, Math.min(start, w.length - len)), len };
+    }
     const spots = []; // candidate start indexes for a 2-letter silent-pattern span
     if (/^kn/.test(w)) spots.push(0);
     if (/^wr/.test(w)) spots.push(0);
@@ -122,11 +130,7 @@
     const wh = w.indexOf('wh'); if (wh >= 0) spots.push(wh);
     if (len === 2 && spots.length && Math.random() < 0.65) return { start: pick(spots), len: 2 };
     const minStart = w.length > 3 ? 1 : 0, candidates = [];
-    for (let i = minStart; i <= w.length - len; i++) {
-      let ok = true;
-      for (let j = 0; j < len; j++) if (!/[a-z]/.test(w[i + j])) { ok = false; break; } // never blank the apostrophe
-      if (ok) candidates.push(i);
-    }
+    for (let i = minStart; i <= w.length - len; i++) candidates.push(i); // letters or the apostrophe are both fair game
     return { start: pick(candidates.length ? candidates : [0]), len };
   }
 
@@ -138,13 +142,17 @@
     const e = pickEntry(sp(), (x) => x.w.replace(/[^a-z]/g, '').length >= 3);
     const w = e.w, { start, len } = blankSpan(w), target = w.slice(start, start + len);
     const pat = w.split('').map((c, k) => (k >= start && k < start + len ? '<span class="blank">_</span>' : esc(c))).join('');
+    const label = target === "'" ? 'apostrophe' : len === 1 ? 'letter' : 'letters';
+    const tip = target.includes("'")
+      ? `Say the word out loud and listen for where it's two words squished together. Does the apostrophe go here? Tap the speaker to hear it again.`
+      : spellTip;
     return {
       skill: 'spell_missing', word: e.w, audio: e.w, hearLabel: 'Hear the word',
-      prompt: len === 1 ? 'Fill in the missing letter.' : 'Fill in the missing letters.',
+      prompt: `Fill in the missing ${label}.`,
       visual: `<div class="wordpat">${pat}</div>`,
-      steps: [{ kind: 'text', q: len === 1 ? 'Type the missing letter.' : 'Type the missing letters.', answer: target, answers: [target] }],
-      tip: spellTip, explain: `The word is spelled ${dashed(w)}.`,
-      reviewPrompt: `Fill in the missing letter${len === 1 ? '' : 's'} of "${w}".`,
+      steps: [{ kind: 'text', q: `Type the missing ${label}.`, answer: target, answers: [target] }],
+      tip, explain: `The word is spelled ${dashed(w)}.`,
+      reviewPrompt: `Fill in the missing ${label} of "${w}".`,
     };
   }
 
