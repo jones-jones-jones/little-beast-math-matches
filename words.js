@@ -130,36 +130,19 @@
     return { start: pick(candidates.length ? candidates : [0]), len };
   }
 
-  // Plausible wrong letter-groups the same length as the real one (for the 2-letter blank).
-  function spanDistractors(target) {
-    const consonants = 'bcdfghjklmnpqrstvwxyz'.split(''), vowels = 'aeiou'.split('');
-    const poolFor = (c) => (vowels.includes(c) ? vowels : consonants);
-    const out = new Set();
-    const rev = target.split('').reverse().join(''); if (rev !== target) out.add(rev);
-    for (let i = 0; i < target.length; i++) {
-      for (const c of poolFor(target[i])) {
-        if (c === target[i]) continue;
-        out.add(target.slice(0, i) + c + target.slice(i + 1));
-      }
-    }
-    return Array.from(out);
-  }
-
   const spellTip = 'Say the word out loud. Some letters are silent! Tap the speaker to hear it again.';
 
   // ------------------------------------------------------------------ SPELLING
+  // He types the missing letter(s) on the keypad, rather than picking from choices.
   function spellMissing() {
     const e = pickEntry(sp(), (x) => x.w.replace(/[^a-z]/g, '').length >= 3);
     const w = e.w, { start, len } = blankSpan(w), target = w.slice(start, start + len);
     const pat = w.split('').map((c, k) => (k >= start && k < start + len ? '<span class="blank">_</span>' : esc(c))).join('');
-    const wrongs = len === 1
-      ? ('aeiou'.includes(target) ? 'aeiou'.split('') : 'bcdfghjklmnprstwyk'.split('').concat(['n', 'g'])).filter((c) => c !== target)
-      : spanDistractors(target);
     return {
       skill: 'spell_missing', word: e.w, audio: e.w, hearLabel: 'Hear the word',
       prompt: len === 1 ? 'Fill in the missing letter.' : 'Fill in the missing letters.',
       visual: `<div class="wordpat">${pat}</div>`,
-      steps: [choiceStep(len === 1 ? 'Which letter is missing?' : 'Which letters are missing?', target, wrongs, 4)],
+      steps: [{ kind: 'text', q: len === 1 ? 'Type the missing letter.' : 'Type the missing letters.', answer: target, answers: [target] }],
       tip: spellTip, explain: `The word is spelled ${dashed(w)}.`,
       reviewPrompt: `Fill in the missing letter${len === 1 ? '' : 's'} of "${w}".`,
     };
