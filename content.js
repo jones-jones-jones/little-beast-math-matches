@@ -7,26 +7,26 @@
  * be read aloud and are not from the school, so edit them freely.
  */
 (typeof window !== 'undefined' ? window : globalThis).LBM_CONTENT = {
-  week: 'Long e, contractions, and possessive nouns; weather technology vocabulary',
+  week: 'Long i sound, irregular verbs, and abstract nouns; weather and seasons vocabulary',
   spelling: [
-    'seam', "mother's", "we'll", 'piece', 'really',
-    "she'd", "doesn't", 'meet', "wasn't", 'alley',
-    'plates', 'street', 'honey', "it's", "i've",
+    'lie', 'ties', 'went', 'faith', 'gave',
+    'reply', 'sank', 'lit', 'sigh', 'bravery',
+    'cycles', 'flies', 'fight', 'paid', 'truth',
     // Challenge words
-    "o'clock", 'timidly', "shouldn't",
+    'brought', 'power', 'brighter',
   ].join('\n'),
   vocab: [
-    'anchor (verb): fasten in place | The sailors drop the anchor to fasten the boat in place.',
-    'cover (noun): protection or shelter | The old barn gave the hikers cover from the storm.',
-    'forecast (verb): to tell what may or will happen | The meteorologist will forecast rain for the weekend.',
-    'gain (verb): something that is gotten, earned, or won | Little Beast worked hard to gain a takedown in the match.',
-    'hazard (noun): a source of danger, harm, or loss | Ice on the road is a hazard for drivers.',
-    'media (noun): the press or broadcasting companies communicating with many people | The local media reported on the big storm.',
-    'mobile (adjective): capable of moving or being moved | The weather van is mobile, so it can drive right up to a storm.',
-    'navigate (verb): to plan or direct the course of | The pilot will navigate the plane around the storm clouds.',
-    'pastime (noun): something that makes time pass pleasantly | Wrestling is Little Beast\'s favorite pastime.',
-    'scene (noun): the place where an action or event occurs or has occurred | Reporters rushed to the scene of the tornado.',
-    'serious (adjective): causing concern or anxiety | A serious storm was heading straight for the town.',
-    'transmit (verb): to send or communicate | The weather satellite can transmit data back to scientists on the ground.',
+    'accompany (verb): happen in connection or combination with | Dad will accompany us to the tournament and sit by the mat.',
+    'cottage (noun): a small house, usually in the country or in a resort | We stayed in a tiny cottage in the country.',
+    'crisp (adjective): keen and bracing, brisk, or invigorating | The crisp fall air felt cool and fresh.',
+    'dissipates (verb): disperses or scatters | The fog dissipates once the sun gets high in the sky.',
+    'droughts (noun): long periods of dry weather | Long droughts can dry up lakes and hurt farm crops.',
+    'flow (verb): move along slowly or continuously | The river will flow slowly past the old mill.',
+    'generates (verb): produces | A wind turbine generates power when the wind blows.',
+    'intense (adjective): very great or strong | The heat during the summer match was intense.',
+    'precipitation (noun): any form of water that falls to the earth, such as rain, hail, or snow | Rain, hail, and snow are all kinds of precipitation.',
+    'refreshing (adjective): restoring strength or vitality | A cold drink of water is refreshing after practice.',
+    'safari (noun): a hunting or an investigative trip | They saw lions and zebras on a safari in Africa.',
+    'unique (adjective): highly unusual or noteworthy | Every snowflake is unique.',
   ].join('\n'),
 };
