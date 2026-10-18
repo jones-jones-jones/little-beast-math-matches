@@ -24,6 +24,9 @@
   // Default lists live in content.js; the "This week's words" screen saves the parent's own lists over them.
   const CONTENT = window.LBM_CONTENT || { spelling: '', vocab: '' };
   let wordsInfo = { sp: { items: [], warn: [] }, vo: { items: [], warn: [] } };
+  // A saved list only counts for the week it was saved in. When content.js ships a new week, the new
+  // defaults replace it (otherwise an old saved list hides the new words on the iPad).
+  if (state.words && state.words.base !== CONTENT.week) { state.words = null; save(); }
   const wordsRaw = () => state.words || { spelling: CONTENT.spelling || '', vocab: CONTENT.vocab || '' };
   function applyWords() {
     const raw = wordsRaw();
@@ -417,6 +420,9 @@
       <textarea id="tb-sp" rows="8" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(raw.spelling)}</textarea>
       <label class="lbl" for="tb-vo">Vocabulary <small>one per line: word (verb): meaning | a sample sentence</small></label>
       <textarea id="tb-vo" rows="10" spellcheck="false" autocapitalize="off" autocorrect="off">${esc(raw.vocab)}</textarea>
+      <h2 class="section">Words in the app now</h2>
+      <div class="wl"><b>Spelling (${info.sp.items.length})</b><div class="chips">${info.sp.items.map((x) => `<span>${esc(x.w)}</span>`).join('')}</div></div>
+      <div class="wl"><b>Vocabulary (${info.vo.items.length})</b><ul>${info.vo.items.map((x) => `<li><b>${esc(x.w)}</b>${x.pos ? ' <i>(' + esc(x.pos) + ')</i>' : ''}: ${esc(x.d)}</li>`).join('')}</ul></div>
       <div class="boardmsg ${boardMsg ? 'show' : ''}">${esc(boardMsg)}${warns.length ? '<br>' + warns.map(esc).join('<br>') : ''}</div>
       <div style="display:grid;gap:12px;margin-top:14px">
         <button class="btn big" data-act="saveboard">Save words</button>
@@ -580,7 +586,7 @@
       case 'board': boardMsg = ''; boardDraft = null; view = 'board'; render(); return window.scrollTo(0, 0);
       case 'saveboard': {
         const sp = document.getElementById('tb-sp'), vo = document.getElementById('tb-vo'); if (!sp || !vo) return;
-        state.words = { spelling: sp.value, vocab: vo.value }; boardDraft = null; applyWords(); save();
+        state.words = { spelling: sp.value, vocab: vo.value, base: CONTENT.week }; boardDraft = null; applyWords(); save();
         boardMsg = `Saved ${wordsInfo.sp.items.length} spelling words and ${wordsInfo.vo.items.length} vocabulary words.`; return render();
       }
       case 'restore': state.words = null; boardDraft = null; applyWords(); save(); boardMsg = 'Back to the list that came with the app.'; return render();

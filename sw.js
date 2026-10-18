@@ -1,7 +1,7 @@
 /* Offline support: after one visit with a connection, the whole app runs with no signal.
  * Serves from the cache first and refreshes it in the background, so updates arrive on the next open.
  * Bump VERSION to force a clean cache. */
-const VERSION = 'lb-v2';
+const VERSION = 'lb-v3';
 const SHELL = ['./', 'index.html', 'style.css', 'problems.js', 'words.js', 'content.js', 'app.js',
   'assets/logo.png', 'assets/icon-180.png'];
 

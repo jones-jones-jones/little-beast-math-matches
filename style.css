@@ -253,3 +253,9 @@ textarea { width: 100%; background: var(--cream); color: var(--ink); border: 4px
 .boardmsg { display: none; margin-top: 12px; background: var(--navy2); border: 2px solid var(--green); border-radius: 12px; padding: 10px 14px; font-size: .95rem; }
 .boardmsg.show { display: block; }
 @media (max-width: 560px) { .lkey { height: 52px; font-size: 1.3rem; } .wordpat { font-size: 2.6rem; } }
+
+.wl { background: var(--navy2); border-radius: 12px; padding: 10px 14px; margin: 10px 0; font-size: .95rem; line-height: 1.4; }
+.wl .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.wl .chips span { background: var(--navy); border: 1px solid var(--gold); border-radius: 999px; padding: 3px 12px; }
+.wl ul { margin: 8px 0 0; padding-left: 20px; }
+.wl li { margin: 4px 0; }
