@@ -7,26 +7,20 @@
  * be read aloud and are not from the school, so edit them freely.
  */
 (typeof window !== 'undefined' ? window : globalThis).LBM_CONTENT = {
-  week: 'Long i sound, irregular verbs, and abstract nouns; weather and seasons vocabulary',
+  week: 'Long o sound and homophones; tornadoes vocabulary',
   spelling: [
-    'lie', 'ties', 'went', 'faith', 'gave',
-    'reply', 'sank', 'lit', 'sigh', 'bravery',
-    'cycles', 'flies', 'fight', 'paid', 'truth',
+    'groan', 'grown', 'toe', 'tow', 'tale',
+    'tail', 'loan', 'roast', 'coach', 'grow',
+    'float', 'bow', 'crow', 'flown', 'croak',
     // Challenge words
-    'brought', 'power', 'brighter',
+    'horse', 'hoarse', 'pillow',
   ].join('\n'),
   vocab: [
-    'accompany (verb): happen in connection or combination with | Dad will accompany us to the tournament and sit by the mat.',
-    'cottage (noun): a small house, usually in the country or in a resort | We stayed in a tiny cottage in the country.',
-    'crisp (adjective): keen and bracing, brisk, or invigorating | The crisp fall air felt cool and fresh.',
-    'dissipates (verb): disperses or scatters | The fog dissipates once the sun gets high in the sky.',
-    'droughts (noun): long periods of dry weather | Long droughts can dry up lakes and hurt farm crops.',
-    'flow (verb): move along slowly or continuously | The river will flow slowly past the old mill.',
-    'generates (verb): produces | A wind turbine generates power when the wind blows.',
-    'intense (adjective): very great or strong | The heat during the summer match was intense.',
-    'precipitation (noun): any form of water that falls to the earth, such as rain, hail, or snow | Rain, hail, and snow are all kinds of precipitation.',
-    'refreshing (adjective): restoring strength or vitality | A cold drink of water is refreshing after practice.',
-    'safari (noun): a hunting or an investigative trip | They saw lions and zebras on a safari in Africa.',
-    'unique (adjective): highly unusual or noteworthy | Every snowflake is unique.',
+    'classifications (noun): specific, systematic arrangements of things into categories | Scientists use classifications to sort tornadoes by how strong they are.',
+    'demolish (verb): to tear down or destroy the structure of | A strong tornado can demolish a barn in seconds.',
+    'funnel cloud (noun): the bottom part of a tornado that is wide at one end and thin at the other | We saw a dark funnel cloud dip down from the storm.',
+    'prepare (verb): to get ready | We practice a tornado drill to prepare for bad weather.',
+    'radar (noun): a device that uses reflected radio waves to track objects | The weather radar showed the storm moving toward town.',
+    'updraft (noun): an upward current of air | A strong updraft inside the storm cloud lifts the air high into the sky.',
   ].join('\n'),
 };

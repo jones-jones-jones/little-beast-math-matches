@@ -49,7 +49,7 @@
     const items = [], warn = [], seen = new Set();
     normApos(text || '').split(/\r?\n/).forEach((line) => {
       line = line.trim(); if (!line) return;
-      const m = line.match(/^(?:\d+[.)]\s*)?([A-Za-z][A-Za-z'-]*)\s*(?:\(([A-Za-z. ]+)\))?\s*(?::|=|\s[-–—]\s)\s*(.+)$/);
+      const m = line.match(/^(?:\d+[.)]\s*)?([A-Za-z][A-Za-z'-]*(?: [A-Za-z][A-Za-z'-]*)*)\s*(?:\(([A-Za-z. ]+)\))?\s*(?::|=|\s[-–—]\s)\s*(.+)$/);
       if (!m) { warn.push(`Skipped "${line.slice(0, 40)}" (use: word (verb): meaning | sample sentence)`); return; }
       const w = m[1].toLowerCase(); if (seen.has(w)) return; seen.add(w);
       const bits = m[3].split('|'), d = bits[0].trim().replace(/[.\s]+$/, ''), s = bits.slice(1).join('|').trim();
@@ -73,6 +73,12 @@
     mice: ['mices', 'mysse', 'miece', 'mouses'], wrinkle: ['rinkle', 'wrinkel', 'wrinkal', 'rinckle'], whale: ['whael', 'whal', 'whayl', 'wheil'],
     cacti: ['cactie', 'cacty', 'cactis', 'cackti'], women: ['wimen', 'womin', 'womon', 'womens'], deer: ['deers', 'deor', 'deere', 'dere'],
     people: ['peple', 'peeple', 'poeple', 'pepole'],
+    groan: ['grone', 'groen', 'groane', 'gronn'], grown: ['grone', 'groun', 'growne'], toe: ['teo', 'toa', 'tooe', 'toee'],
+    tow: ['towe', 'toh', 'taw', 'tou'], tale: ['tayl', 'taile', 'tael', 'taal'], tail: ['tial', 'taill', 'taal', 'tayl'],
+    loan: ['lone', 'loen', 'loaan', 'laon'], roast: ['rost', 'roest', 'raost', 'roste'], coach: ['coche', 'cotch', 'caoch', 'coatch'],
+    grow: ['groe', 'grou', 'gro', 'groh'], float: ['flote', 'floet', 'flowt', 'folat'], bow: ['bou', 'bowe', 'boh', 'baw'],
+    crow: ['crou', 'crowe', 'croe', 'croh'], flown: ['flone', 'floan', 'flowen', 'flowne'], croak: ['croke', 'croack', 'croac', 'croek'],
+    horse: ['hoarce', 'horce', 'hors', 'hurse'], hoarse: ['horce', 'hoarce', 'hoars', 'hoarss'], pillow: ['pilow', 'pillo', 'pilloe', 'pillowe'],
   };
 
   function misspellings(w, all) {
