@@ -79,6 +79,12 @@
     grow: ['groe', 'grou', 'gro', 'groh'], float: ['flote', 'floet', 'flowt', 'folat'], bow: ['bou', 'bowe', 'boh', 'baw'],
     crow: ['crou', 'crowe', 'croe', 'croh'], flown: ['flone', 'floan', 'flowen', 'flowne'], croak: ['croke', 'croack', 'croac', 'croek'],
     horse: ['hoarce', 'horce', 'hors', 'hurse'], hoarse: ['horce', 'hoarce', 'hoars', 'hoarss'], pillow: ['pilow', 'pillo', 'pilloe', 'pillowe'],
+    cue: ['kue', 'queu', 'cew', 'cuee'], few: ['fue', 'feu', 'fiew', 'fewe'], well: ['wel', 'whell', 'weel', 'wele'],
+    rose: ['roze', 'roas', 'rowse', 'rosse'], argue: ['arguee', 'argu', 'aregue', 'arugue'], fire: ['fier', 'fyre', 'fiar', 'firre'],
+    hue: ['heu', 'huwe', 'hui', 'hueu'], ring: ['rign', 'rin', 'rhing', 'ringe'], value: ['valu', 'valew', 'vallue', 'valyu'],
+    change: ['chaneg', 'chainge', 'chang', 'chanje'], spew: ['spue', 'spewe', 'spyew', 'spiew'], rescue: ['rescu', 'reskue', 'rescew', 'rescoo'],
+    park: ['parck', 'parke', 'pahrk', 'paark'], rocks: ['rox', 'rocs', 'rockes', 'rokcs'], light: ['ligt', 'liht', 'lighte', 'lihgt'],
+    pitcher: ['pitchur', 'picher', 'pitchar', 'pitcer'], nephew: ['nefew', 'nephue', 'nephiew', 'nepheu'], continue: ['continu', 'contenue', 'continew', 'kontinue'],
   };
 
   function misspellings(w, all) {

@@ -7,20 +7,20 @@
  * be read aloud and are not from the school, so edit them freely.
  */
 (typeof window !== 'undefined' ? window : globalThis).LBM_CONTENT = {
-  week: 'Long o sound and homophones; tornadoes vocabulary',
+  week: 'Long u sound, homographs and multiple-meaning words; weather and meteorologists vocabulary',
   spelling: [
-    'groan', 'grown', 'toe', 'tow', 'tale',
-    'tail', 'loan', 'roast', 'coach', 'grow',
-    'float', 'bow', 'crow', 'flown', 'croak',
+    'cue', 'few', 'well', 'rose', 'argue',
+    'fire', 'hue', 'ring', 'value', 'change',
+    'spew', 'rescue', 'park', 'rocks', 'light',
     // Challenge words
-    'horse', 'hoarse', 'pillow',
+    'pitcher', 'nephew', 'continue',
   ].join('\n'),
   vocab: [
-    'classifications (noun): specific, systematic arrangements of things into categories | Scientists use classifications to sort tornadoes by how strong they are.',
-    'demolish (verb): to tear down or destroy the structure of | A strong tornado can demolish a barn in seconds.',
-    'funnel cloud (noun): the bottom part of a tornado that is wide at one end and thin at the other | We saw a dark funnel cloud dip down from the storm.',
-    'prepare (verb): to get ready | We practice a tornado drill to prepare for bad weather.',
-    'radar (noun): a device that uses reflected radio waves to track objects | The weather radar showed the storm moving toward town.',
-    'updraft (noun): an upward current of air | A strong updraft inside the storm cloud lifts the air high into the sky.',
+    'accurate (adjective): without errors or mistakes | The weather report was accurate, and it rained just as they said.',
+    'concern (noun): worried interest | The farmers showed great concern about the coming storm.',
+    'instruments (noun): tools designed for precise or careful work | Weather instruments measure the wind and the temperature.',
+    'meteorologist (noun): an expert in the science dealing with the study of the atmosphere | The meteorologist explained why the storm was growing.',
+    'minimize (verb): to reduce to the smallest or least possible amount or degree | We close the windows to minimize damage from the storm.',
+    'threat (noun): a sign that something dangerous or unfortunate may happen | The dark clouds were a threat of a severe thunderstorm.',
   ].join('\n'),
 };
