@@ -7,20 +7,26 @@
  * be read aloud and are not from the school, so edit them freely.
  */
 (typeof window !== 'undefined' ? window : globalThis).LBM_CONTENT = {
-  week: 'Long u sound, homographs and multiple-meaning words; weather and meteorologists vocabulary',
+  week: 'Long oo sound, homographs and multiple-meaning words; deserts, polar regions and land features vocabulary',
   spelling: [
-    'cue', 'few', 'well', 'rose', 'argue',
-    'fire', 'hue', 'ring', 'value', 'change',
-    'spew', 'rescue', 'park', 'rocks', 'light',
+    'clue', 'tuna', 'fine', 'mind', 'root',
+    'yard', 'noodle', 'cool', 'rude', 'file',
+    'chew', 'choose', 'permit', 'waves', 'letter',
     // Challenge words
-    'pitcher', 'nephew', 'continue',
+    'patient', 'duet', 'jewel',
   ].join('\n'),
   vocab: [
-    'accurate (adjective): without errors or mistakes | The weather report was accurate, and it rained just as they said.',
-    'concern (noun): worried interest | The farmers showed great concern about the coming storm.',
-    'instruments (noun): tools designed for precise or careful work | Weather instruments measure the wind and the temperature.',
-    'meteorologist (noun): an expert in the science dealing with the study of the atmosphere | The meteorologist explained why the storm was growing.',
-    'minimize (verb): to reduce to the smallest or least possible amount or degree | We close the windows to minimize damage from the storm.',
-    'threat (noun): a sign that something dangerous or unfortunate may happen | The dark clouds were a threat of a severe thunderstorm.',
+    'Antarctic (adjective): relating to the South Pole or surrounding regions | Penguins live in the Antarctic, where it is freezing cold.',
+    'continent (noun): one of the seven large land areas on Earth | Africa is the second largest continent.',
+    'elevation (noun): height above sea level | The mountain town has a high elevation, so the air is thin.',
+    'evaporate (verb): change from a liquid or solid into a gas | The puddle will evaporate when the sun comes out.',
+    'extinct (adjective): no longer active or burning | The volcano is extinct, so it will never erupt again.',
+    'mirage (noun): an illusion in which a distant object is not really there | The traveler saw a mirage of a lake in the hot desert.',
+    'plateaus (noun): areas of flat land higher than the surrounding country | The hikers crossed two high plateaus on their trip.',
+    'polar (adjective): having to do with the North or South Pole | The polar bear walked across the ice.',
+    'sandwiched (verb): fit or squeezed in tightly | I sandwiched my small bag between two big suitcases.',
+    'severe (adjective): harsh, or causing hardship, or discomfort | The severe storm knocked down trees and closed the roads.',
+    'tundra (noun): flat, treeless land of permanently frozen soil | Few plants can grow on the frozen tundra.',
+    'vapor (noun): small particles of mist, steam, or smoke that can be seen in the air | Vapor rose from the hot cup of cocoa.',
   ].join('\n'),
 };
