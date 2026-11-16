@@ -7,26 +7,26 @@
  * be read aloud and are not from the school, so edit them freely.
  */
 (typeof window !== 'undefined' ? window : globalThis).LBM_CONTENT = {
-  week: 'Long oo sound, homographs and multiple-meaning words; deserts, polar regions and land features vocabulary',
+  week: 'Long and short oo sounds with -ing and -ed endings; A New Life for Mei immigration vocabulary (Unit 3 Lesson 1)',
   spelling: [
-    'clue', 'tuna', 'fine', 'mind', 'root',
-    'yard', 'noodle', 'cool', 'rude', 'file',
-    'chew', 'choose', 'permit', 'waves', 'letter',
+    'took', 'shook', 'broom', 'stood', 'landing',
+    'named', 'hoping', 'stripped', 'scoop', 'amazing',
+    'brook', 'pool', 'bored', 'tried', 'timing',
     // Challenge words
-    'patient', 'duet', 'jewel',
+    'staring', 'admitted', 'woodwork',
   ].join('\n'),
   vocab: [
-    'Antarctic (adjective): relating to the South Pole or surrounding regions | Penguins live in the Antarctic, where it is freezing cold.',
-    'continent (noun): one of the seven large land areas on Earth | Africa is the second largest continent.',
-    'elevation (noun): height above sea level | The mountain town has a high elevation, so the air is thin.',
-    'evaporate (verb): change from a liquid or solid into a gas | The puddle will evaporate when the sun comes out.',
-    'extinct (adjective): no longer active or burning | The volcano is extinct, so it will never erupt again.',
-    'mirage (noun): an illusion in which a distant object is not really there | The traveler saw a mirage of a lake in the hot desert.',
-    'plateaus (noun): areas of flat land higher than the surrounding country | The hikers crossed two high plateaus on their trip.',
-    'polar (adjective): having to do with the North or South Pole | The polar bear walked across the ice.',
-    'sandwiched (verb): fit or squeezed in tightly | I sandwiched my small bag between two big suitcases.',
-    'severe (adjective): harsh, or causing hardship, or discomfort | The severe storm knocked down trees and closed the roads.',
-    'tundra (noun): flat, treeless land of permanently frozen soil | Few plants can grow on the frozen tundra.',
-    'vapor (noun): small particles of mist, steam, or smoke that can be seen in the air | Vapor rose from the hot cup of cocoa.',
+    'accommodate (verb): to do a favor or service for | The hotel will accommodate our family by adding an extra bed to the room.',
+    'alley (noun): a narrow street or passageway | The cat slipped down the dark alley behind the shops.',
+    'apprehensive (adjective): fearful about what may happen | She felt apprehensive about her first day at the new school.',
+    'bellowed (verb): cried out in a loud, deep voice | The coach bellowed across the field for the team to come in.',
+    'fate (noun): unavoidable lot or fortune | The sailors could not change their fate once the storm hit.',
+    'hitch (noun): an unexpected delay or obstacle | The trip went well, with only one small hitch when the bus was late.',
+    'link (verb): to join, unite, or connect | The new bridge will link the two towns.',
+    'proper (adjective): suitable, appropriate, or correct for a given purpose | You need the proper shoes to play on the wrestling mat.',
+    'rush (noun): the act of making a sudden, swift movement | There was a rush for the door when the bell rang.',
+    'strike (verb): to find suddenly or unexpectedly | The miners hoped to strike gold in the old mountain.',
+    'temperamental (adjective): showing moodiness, sensitivity, or irritability | The temperamental old car would start one day and refuse the next.',
+    'tie (noun): part of a structure that holds together other parts | A wooden tie holds the two railroad tracks in place.',
   ].join('\n'),
 };
