@@ -12,7 +12,7 @@ Progress (rank, XP, skill accuracy, medals) is saved in the browser on the devic
 - `assets/logo.png`, `assets/icon-180.png` — his logo and the iPad home-screen icon
 
 ## Subjects
-Home has the combined **Tournament Trail** (mixes math, spelling, and vocabulary: about 60/20/20) and a **Pick a subject** row: Math (6 training rooms), Spelling, Vocabulary.
+Home has the combined **Tournament Trail** (mixes math, spelling, and vocabulary: about 60/20/20) and a **Pick a subject** row: Math (7 training rooms), Spelling, Vocabulary.
 **Spelling** gets harder as he goes: missing letters, then hear the word and pick the spelling, then hear it and type it.
 In a tournament the stage follows the round (early rounds easy, the final hardest); in the Spelling room and practice match it follows the period.
 **Vocabulary** is multiple choice (meaning, find the word, fill in the sentence) with a "hear it in a sentence" button.

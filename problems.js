@@ -10,7 +10,8 @@
  * to SKILLS below (pick a category and, optionally, a weight `w`).
  *
  * Math content below is Topic 3 (arrays, the Distributive Property, and
- * multi-step multiplication word problems), from the school Assessment Practice sheet and the Topic 3 Performance Task (School Fair / Bake Sale).
+ * multi-step multiplication word problems), from the school Assessment Practice sheet and the Topic 3 Performance Task (School Fair / Bake Sale),
+ * plus Topic 9 (adding and subtracting within 1,000: place value, compatible-number estimates, breaking addends apart, sums of three numbers).
  */
 (function (root) {
   'use strict';
@@ -384,12 +385,139 @@
   }
 
   // =====================================================================
+  // TOPIC 9: ADD & SUBTRACT within 1,000 (from the Topic 9 Assessment Practice sheet)
+  // =====================================================================
+  const digitsOf = (n) => ({ h: Math.floor(n / 100), t: Math.floor(n / 10) % 10, o: n % 10 });
+
+  // "Find the sum of 337 and 285. Use place value and find the sums of the hundreds, tens, and ones."
+  function addPlaceValue() {
+    const a = rnd(120, 780), b = rnd(110, Math.min(780, 999 - a)), A = digitsOf(a), B = digitsOf(b);
+    const H = (A.h + B.h) * 100, T = (A.t + B.t) * 10, O = A.o + B.o, S = a + b;
+    return {
+      skill: 'add_place', prompt: `Find the sum of ${a} and ${b}. Use place value to add the hundreds, then the tens, then the ones.`,
+      visual: `<div class="bigeq">${a} + ${b}</div>`,
+      steps: [
+        numStep(`Hundreds: ${A.h * 100} + ${B.h * 100} = ?`, H),
+        numStep(`Tens: ${A.t * 10} + ${B.t * 10} = ?`, T),
+        numStep(`Ones: ${A.o} + ${B.o} = ?`, O),
+        numStep(`Add the three parts: ${H} + ${T} + ${O}. What is the sum?`, S),
+      ],
+      tip: `Pull each number apart: ${a} is ${A.h * 100} + ${A.t * 10} + ${A.o}, and ${b} is ${B.h * 100} + ${B.t * 10} + ${B.o}. Add the hundreds together, the tens together, and the ones together. Then add those three answers.`,
+      explain: `${H} + ${T} + ${O} = ${S}, so ${a} + ${b} = ${S}.`,
+    };
+  }
+
+  // Subtract within 1,000, then check with addition.
+  function subtractAndCheck() {
+    const a = rnd(300, 950), b = rnd(110, a - 90), d = a - b;
+    return {
+      skill: 'sub_check', prompt: `Find the difference of ${a} and ${b}. Then check your answer with addition.`,
+      visual: `<div class="bigeq">${a} − ${b}</div>`,
+      steps: [
+        numStep(`${a} − ${b} = ?`, d),
+        numStep(`Check it: ${d} + ${b} should get you back to ${a}. What is ${d} + ${b}?`, a),
+      ],
+      tip: `Subtract the hundreds, tens, and ones, and trade (regroup) from the next place when a digit is too small. To check, add your answer to the number you took away. You should land right back on ${a}.`,
+      explain: `${a} − ${b} = ${d}. Check: ${d} + ${b} = ${a}.`,
+    };
+  }
+
+  // "Find the sum of 176, 204, and 59." Choices are off by 10 or 100, the usual regrouping slips.
+  function sumOfThree() {
+    const a = rnd(110, 380), b = rnd(110, 380), c = rnd(21, 99), S = a + b + c;
+    const nums = shuffle([a, b, c]);
+    const cand = shuffle([S - 10, S + 10, S - 100, S + 100, S - 1, S + 1]).slice(0, 3);
+    const vals = [S].concat(cand).sort((x, y) => x - y);
+    const choices = vals.map((v) => ({ v: String(v), html: String(v), text: String(v) }));
+    return {
+      skill: 'add_three', prompt: `Find the sum of ${nums[0]}, ${nums[1]}, and ${nums[2]}.`,
+      visual: `<div class="bigeq small">${nums.join(' + ')}</div>`,
+      steps: [{ kind: 'choice', q: 'Pick the sum.', choices, answer: String(S) }],
+      tip: `Add two numbers first, then add the third. Line up the places: ones with ones, tens with tens, hundreds with hundreds. Watch for a ten or a hundred you need to carry. The wrong choices are off by exactly that.`,
+      explain: `${a} + ${b} = ${a + b}. ${a + b} + ${c} = ${S}. (${nums.join(' + ')} = ${S} in any order.)`,
+    };
+  }
+
+  // "An estimate of 431 − 249 using compatible numbers is 425 − 250 = 175. Would it be reasonable for the exact difference to be 182?"
+  function estimateReasonable() {
+    const near25 = (x) => Math.round(x / 25) * 25;
+    let a, b, op;
+    for (;;) {
+      op = Math.random() < 0.6 ? '−' : '+';
+      if (op === '−') { a = rnd(300, 950); b = rnd(110, a - 90); } else { a = rnd(110, 600); b = rnd(110, Math.min(600, 990 - a)); }
+      if (near25(a) !== a || near25(b) !== b) break; // want at least one number that actually changes
+    }
+    const ea = near25(a), eb = near25(b), exact = op === '−' ? a - b : a + b, est = op === '−' ? ea - eb : ea + eb;
+    const word = op === '−' ? 'difference' : 'sum';
+    let w = exact; // a reasonable answer is the real one; an unreasonable one slips a place value
+    if (Math.random() < 0.5) {
+      const cands = shuffle([exact + 100, exact - 100, exact + 60, exact - 60, exact + 200]).filter((x) => x > 0 && Math.abs(x - est) >= 50);
+      w = cands[0] !== undefined ? cands[0] : exact + 200;
+    }
+    const ok = Math.abs(w - est) <= 25;
+    return {
+      skill: 'est_compat', prompt: `An estimate of ${a} ${op} ${b} using compatible numbers is ${ea} ${op} ${eb} = ${est}. Would it be reasonable for the exact ${word} to be ${w}?`,
+      steps: [
+        numStep(`Check the estimate: ${ea} ${op} ${eb} = ?`, est),
+        choiceStep(`Is ${w} reasonable for the exact ${word}?`, ok ? 'Yes, it is reasonable' : 'No, it is not reasonable',
+          [ok ? 'No, it is not reasonable' : 'Yes, it is reasonable'], 2),
+      ],
+      tip: `The estimate ${est} tells you about where the exact answer should land. Compare ${w} to ${est}. If they are close, ${w} is reasonable. If they are far apart (like a whole hundred off), something went wrong.`,
+      explain: `${ea} ${op} ${eb} = ${est}. ${w} is ${ok ? 'close to' : 'far from'} ${est}, so it is ${ok ? '' : 'not '}reasonable.`,
+    };
+  }
+
+  // "Which addends are broken apart correctly?" (single pick here: the app takes one answer per move)
+  function breakApartAddends() {
+    const a = rnd(120, 780), b = rnd(110, Math.min(780, 960 - a)), A = digitsOf(a), B = digitsOf(b);
+    const fix = (x) => (x === 0 ? 1 : x);
+    const ah = A.h, bh = B.h, at = fix(A.t), bt = fix(B.t), ao = fix(A.o), bo = fix(B.o);
+    const aa = ah * 100 + at * 10 + ao, bb = bh * 100 + bt * 10 + bo;
+    const ex = (h1, h2, t1, t2, o1, o2) => `(${h1} + ${h2}) + (${t1} + ${t2}) + (${o1} + ${o2})`;
+    const right = ex(ah * 100, bh * 100, at * 10, bt * 10, ao, bo);
+    const wrongs = [
+      ex(ah * 100, bh * 100, at, bt, ao, bo),                         // tens written as ones
+      ex(ah, bh, at * 10, bt * 10, ao, bo),                           // hundreds written as ones
+      ex(ah * 100, bh * 100, at * 10, bt * 10, ao * 10, bo),          // ones written as tens
+      `${ah * 100} + (${at * 10} + ${bt * 10}) + (${ao} + ${bo})`,    // second hundreds left out
+    ];
+    const ch = textChoices(right, wrongs, 4);
+    return {
+      skill: 'add_break', prompt: `Which one shows ${aa} + ${bb} broken apart correctly by place value?`,
+      visual: `<div class="bigeq">${aa} + ${bb}</div>`,
+      steps: [Object.assign({ kind: 'choice', q: 'Pick the correct break apart.' }, ch)],
+      tip: `Break each number into hundreds, tens, and ones, and keep each part's real value. ${aa} is ${ah * 100} + ${at * 10} + ${ao}. A 7 in the tens place is 70, not 7. Then pair the hundreds with hundreds, the tens with tens, and the ones with ones.`,
+      explain: `${aa} = ${ah * 100} + ${at * 10} + ${ao} and ${bb} = ${bh * 100} + ${bt * 10} + ${bo}. Pair them by place: ${right}.`,
+    };
+  }
+
+  // Two-step add / subtract stories with 3-digit numbers (Story Slam)
+  function storyAddSub() {
+    const a = rnd(210, 540), b = rnd(120, 400), c = rnd(40, 190), n = pick(NAMES);
+    const T = pick([
+      () => ({ txt: `Coach Bell's club sold ${a} tickets on Saturday and ${b} tickets on Sunday. How many tickets did the club sell in all?`, q1: 'Add the two days. How many tickets in all?', r1: a + b, u: 'tickets',
+        q2: `Then ${c} tickets were refunded. How many tickets are left?`, r2: a + b - c, ex: `${a} + ${b} = ${a + b}. ${a + b} − ${c} = ${a + b - c}.`, t: 'First add Saturday and Sunday. Then take away the refunded tickets.' }),
+      () => ({ txt: `The gym had ${a} water bottles. Coach Bell bought ${b} more for the tournament, then the team used ${c}. How many bottles are left?`, q1: 'How many bottles after Coach Bell buys more?', r1: a + b, u: 'bottles',
+        q2: `Now take away the ${c} the team used. How many are left?`, r2: a + b - c, ex: `${a} + ${b} = ${a + b}. ${a + b} − ${c} = ${a + b - c}.`, t: 'Add the new bottles first. Then subtract the ones the team used.' }),
+      () => { const hi = Math.max(a, b) + 40, lo = Math.min(a, b); return ({ txt: `${n} read ${hi} pages in October and ${lo} pages in November. How many pages did ${n} read in all?`, q1: 'How many pages in all?', r1: hi + lo, u: 'pages',
+        q2: `How many MORE pages did ${n} read in October than in November?`, r2: hi - lo, ex: `${hi} + ${lo} = ${hi + lo}. ${hi} − ${lo} = ${hi - lo}.`, t: 'Add both months for the total. For "how many more," subtract the smaller number from the bigger one.' }); },
+    ]);
+    const t = T();
+    return {
+      skill: 'story_addsub', prompt: t.txt,
+      steps: [numStep(t.q1, t.r1, { unit: t.u }), numStep(t.q2, t.r2, { unit: t.u })],
+      tip: t.t, explain: t.ex,
+    };
+  }
+
+  // =====================================================================
   // Catalog
   // =====================================================================
   const CATS = {
     story: { name: 'Story Slam', emoji: '📖', blurb: 'Word problems', subject: 'math' },
     array: { name: 'Arrays & Properties', emoji: '🔲', blurb: 'Arrays, breaking apart, combining', subject: 'math' },
     dist: { name: 'Distributive Property', emoji: '➗', blurb: 'Break apart facts, check equations', subject: 'math' },
+    addsub: { name: 'Add & Subtract', emoji: '🧮', blurb: 'Place value, estimating, breaking numbers apart', subject: 'math' },
   };
 
   const SKILLS = {
@@ -397,6 +525,7 @@
     story_three: { name: 'Multi-step stories', cat: 'story', gen: storyThreeFactor },
     story_rate: { name: 'Rental & money stories', cat: 'story', gen: storyRate },
     story_table: { name: 'Table stories (Bake Sale)', cat: 'story', gen: storyBake },
+    story_addsub: { name: 'Add & subtract stories', cat: 'story', gen: storyAddSub, w: 1.6 },
     array_total: { name: 'Array totals', cat: 'array', gen: arrayTotal },
     array_break: { name: 'Break apart arrays', cat: 'array', gen: arrayBreakApart },
     array_combine: { name: 'Combine arrays', cat: 'array', gen: arrayCombine },
@@ -407,6 +536,11 @@
     dist_check: { name: 'Check the equation', cat: 'dist', gen: distributiveCheck },
     facts_product: { name: 'Facts for a product', cat: 'dist', gen: factsForProduct },
     tens_fives: { name: 'Split a fact in half', cat: 'dist', gen: tensAsFives },
+    add_place: { name: 'Add with place value', cat: 'addsub', gen: addPlaceValue, w: 1.6 },
+    sub_check: { name: 'Subtract and check', cat: 'addsub', gen: subtractAndCheck, w: 1.6 },
+    add_three: { name: 'Sum of three numbers', cat: 'addsub', gen: sumOfThree, w: 1.6 },
+    est_compat: { name: 'Estimate with compatible numbers', cat: 'addsub', gen: estimateReasonable, w: 1.6 },
+    add_break: { name: 'Break apart addends', cat: 'addsub', gen: breakApartAddends, w: 1.6 },
   };
 
   function makeProblem(skillId) {
