@@ -65,11 +65,35 @@
   }
 
   // ---------------------------------------------------------------- audio
-  let ac = null;
+  let ac = null, iosUnlocked = false;
+  // By default iOS Safari mutes web audio AND speech when the silent switch / Control Center mute is on.
+  // Declaring a "playback" audio session (and looping one silent <audio> clip) makes it play like a media app.
+  function unlockIOS() {
+    if (iosUnlocked) return; iosUnlocked = true;
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* ignore */ }
+    try {
+      const n = 800, v = new DataView(new ArrayBuffer(44 + n * 2)), w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+      w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+      const a = new Audio(URL.createObjectURL(new Blob([v], { type: 'audio/wav' }))); a.loop = true; a.setAttribute('playsinline', ''); a.volume = 0.01;
+      const p = a.play(); if (p && p.catch) p.catch(() => { iosUnlocked = false; });
+    } catch (e) { iosUnlocked = false; }
+  }
   function ctx() {
-    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) { ac = null; }
+    unlockIOS();
+    try {
+      if (ac && ac.state === 'closed') ac = null;
+      if (!ac) {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        // iOS only starts audio after a sound is played inside a tap; play one silent sample to unlock it
+        const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0);
+      }
+      // iOS Safari uses 'interrupted' (after Siri, a call, app switch, or screen lock) as well as 'suspended'
+      if (ac.state !== 'running') ac.resume();
+    } catch (e) { ac = null; }
     return ac;
   }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && ac && ac.state !== 'running') { try { ac.resume(); } catch (e) { /* ignore */ } } });
   function tone(freq, dur, type, t0, vol, slideTo) {
     if (!state.sound) return; const a = ctx(); if (!a) return;
     try {
