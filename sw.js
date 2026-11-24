@@ -1,9 +1,11 @@
 /* Offline support: after one visit with a connection, the whole app runs with no signal.
  * Serves from the cache first and refreshes it in the background, so updates arrive on the next open.
  * Bump VERSION to force a clean cache. */
-const VERSION = 'lb-v9';
-const SHELL = ['./', 'index.html', 'style.css', 'problems.js', 'words.js', 'content.js', 'app.js',
-  'assets/logo.png', 'assets/icon-180.png'];
+const VERSION = 'lb-v10';
+importScripts('assets/audio/manifest.js'); // lists the recorded word clips
+const CLIPS = Object.values(self.LBM_AUDIO || {}).map((f) => 'assets/audio/' + f);
+const SHELL = ['./', 'assets/audio/manifest.js', 'index.html', 'style.css', 'problems.js', 'words.js', 'content.js', 'app.js',
+  'assets/logo.png', 'assets/icon-180.png'].concat(CLIPS);
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -191,7 +191,20 @@
       mv('Arm drag', '{o} drags the arm and gets behind. Little Beast is a fighter, so back to the neutral position!'),
     ],
   };
+  // Recorded clips (assets/audio, made by tools/make_audio.py) play through a normal audio element,
+  // which works even when the device's built-in speech voice is silent or missing.
+  const voiceEl = new Audio();
+  function playClip(text) {
+    const f = window.LBM_AUDIO && window.LBM_AUDIO[text]; if (!f) return false;
+    try {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      voiceEl.pause(); voiceEl.src = 'assets/audio/' + f; voiceEl.volume = 1;
+      const p = voiceEl.play(); if (p && p.catch) p.catch(() => {});
+      return true;
+    } catch (e) { return false; }
+  }
   function speakWord(text, queue) {
+    if (text && playClip(text)) return;
     try {
       const s = window.speechSynthesis; if (!s || !text) return;
       if (!queue) s.cancel();

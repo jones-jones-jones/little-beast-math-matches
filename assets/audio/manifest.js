@@ -1,0 +1,20 @@
+(typeof window !== "undefined" ? window : self).LBM_AUDIO = {
+"admitted": "admitted-228d58.wav",
+"amazing": "amazing-922c81.wav",
+"bored": "bored-f5b5c2.wav",
+"brook": "brook-4843d6.wav",
+"broom": "broom-5bfab4.wav",
+"hoping": "hoping-d47bb5.wav",
+"landing": "landing-e1b478.wav",
+"named": "named-72b49a.wav",
+"pool": "pool-b10a8c.wav",
+"scoop": "scoop-425822.wav",
+"shook": "shook-21b5c5.wav",
+"staring": "staring-65711b.wav",
+"stood": "stood-711828.wav",
+"stripped": "stripped-10ca9c.wav",
+"timing": "timing-4ad8aa.wav",
+"took": "took-a50e43.wav",
+"tried": "tried-c6b526.wav",
+"woodwork": "woodwork-c7317c.wav"
+};
