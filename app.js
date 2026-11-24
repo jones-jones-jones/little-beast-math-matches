@@ -196,7 +196,10 @@
   }
   // iOS Safari drops an utterance spoken right after cancel(), and stays "paused" after an interruption.
   // So wake it up and, after a cancel, wait a beat before speaking.
+  const keep = []; // Safari can garbage-collect an utterance mid-sentence ("canceled"), so hold a reference until it ends
   function speakNow(s, u, queued) {
+    keep.push(u); const drop = () => { const i = keep.indexOf(u); if (i >= 0) keep.splice(i, 1); };
+    u.addEventListener('end', drop); u.addEventListener('error', drop);
     try { if (s.paused) s.resume(); } catch (e) { /* ignore */ }
     if (queued) { s.speak(u); return; }
     setTimeout(() => { try { s.speak(u); } catch (e) { /* ignore */ } }, 80);
@@ -614,10 +617,10 @@
         const s = window.speechSynthesis, ev = [];
         const box = document.getElementById('sndtest') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'sndtest' }));
         box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#000d;color:#fff;font:14px/1.4 monospace;padding:10px;border-radius:10px;white-space:pre-wrap';
-        const show = () => { box.textContent = `Sound test v7\nsound toggle: ${state.sound} | voice toggle: ${state.voice}\naudio engine: ${ac ? ac.state : 'none'}\nspeech supported: ${!!s}${s ? ` | voices: ${s.getVoices().length} | speaking: ${s.speaking} | paused: ${s.paused}` : ''}\naudioSession: ${navigator.audioSession ? navigator.audioSession.type : 'not supported'}\nspeech events: ${ev.join(', ') || 'none yet'}\n(tap the 🧪 again to close)`; };
+        const show = () => { box.textContent = `Sound test v8\nsound toggle: ${state.sound} | voice toggle: ${state.voice}\naudio engine: ${ac ? ac.state : 'none'}\nspeech supported: ${!!s}${s ? ` | voices: ${s.getVoices().length} | speaking: ${s.speaking} | paused: ${s.paused}` : ''}\naudioSession: ${navigator.audioSession ? navigator.audioSession.type : 'not supported'}\nspeech events: ${ev.join(', ') || 'none yet'}\n(tap the 🧪 again to close)`; };
         if (box.dataset.open === '1') { box.remove(); return; }
-        box.dataset.open = '1'; state.sound && sfx.bell();
-        if (s) { try { s.cancel(); const u = new SpeechSynthesisUtterance('Testing, one, two, three'); u.lang = 'en-US'; ['start', 'end', 'error'].forEach((n) => { u['on' + n] = (e) => { ev.push(n + (e && e.error ? ':' + e.error : '')); show(); }; }); setTimeout(() => s.speak(u), 80); } catch (err) { ev.push('threw:' + err.message); } }
+        box.dataset.open = '1';
+        if (s) { try { s.cancel(); const u = new SpeechSynthesisUtterance('Testing, one, two, three'); u.lang = 'en-US'; ['start', 'end', 'error'].forEach((n) => { u.addEventListener(n, (e) => { ev.push(n + (e && e.error ? ':' + e.error : '')); show(); if (n !== 'start' && state.sound) setTimeout(() => sfx.bell(), 300); }); }); speakNow(s, u); } catch (err) { ev.push('threw:' + err.message); } }
         show(); setTimeout(show, 1500); return;
       }
       case 'sound': state.sound = !state.sound; save(); return render();
