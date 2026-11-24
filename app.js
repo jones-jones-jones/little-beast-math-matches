@@ -71,6 +71,8 @@
   function unlockIOS() {
     if (iosUnlocked) return; iosUnlocked = true;
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* ignore */ }
+    // iOS only allows speech after one utterance has been started inside a tap; speak a silent one to unlock it
+    try { const s = window.speechSynthesis; if (s) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; s.speak(u); s.getVoices(); } } catch (e) { /* ignore */ }
     try {
       const n = 800, v = new DataView(new ArrayBuffer(44 + n * 2)), w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
       w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
@@ -140,7 +142,7 @@
       const u = new SpeechSynthesisUtterance(text.replace(/[^\w\s.,!?'-]/g, ''));
       const vs = s.getVoices();
       const v = vs.find((x) => /^en[-_](US|GB)/i.test(x.lang) && /(Daniel|Alex|Fred|Aaron|Arthur|Tom|Male)/i.test(x.name)) || vs.find((x) => /^en/i.test(x.lang));
-      if (v) u.voice = v; u.rate = 1.05; u.pitch = 0.8; s.speak(u);
+      if (v) u.voice = v; u.rate = 1.05; u.pitch = 0.8; u.volume = 1; u.lang = (v && v.lang) || 'en-US'; speakNow(s, u);
     } catch (e) { /* ignore */ }
   }
 
@@ -189,8 +191,15 @@
       if (!queue) s.cancel();
       const u = new SpeechSynthesisUtterance(text), vs = s.getVoices();
       const v = vs.find((x) => /^en[-_]US/i.test(x.lang) && /(Samantha|Alex|Karen|Nicky|Aaron)/i.test(x.name)) || vs.find((x) => /^en[-_]US/i.test(x.lang)) || vs.find((x) => /^en/i.test(x.lang));
-      if (v) u.voice = v; u.rate = 0.85; u.pitch = 1; s.speak(u);
+      if (v) u.voice = v; u.rate = 0.85; u.pitch = 1; u.volume = 1; u.lang = (v && v.lang) || 'en-US'; speakNow(s, u, queue);
     } catch (e) { /* ignore */ }
+  }
+  // iOS Safari drops an utterance spoken right after cancel(), and stays "paused" after an interruption.
+  // So wake it up and, after a cancel, wait a beat before speaking.
+  function speakNow(s, u, queued) {
+    try { if (s.paused) s.resume(); } catch (e) { /* ignore */ }
+    if (queued) { s.speak(u); return; }
+    setTimeout(() => { try { s.speak(u); } catch (e) { /* ignore */ } }, 80);
   }
 
   const LINES = {
@@ -389,7 +398,8 @@
   function topbar(extra) {
     return `<div class="topbar">${extra || ''}
       <button class="iconbtn ${state.sound ? '' : 'off'}" data-act="sound" aria-label="Toggle sound">🔊</button>
-      <button class="iconbtn ${state.voice ? '' : 'off'}" data-act="voice" aria-label="Toggle announcer voice">🎙️</button></div>`;
+      <button class="iconbtn ${state.voice ? '' : 'off'}" data-act="voice" aria-label="Toggle announcer voice">🎙️</button>
+      <button class="iconbtn" data-act="soundtest" aria-label="Sound test">🧪</button></div>`;
   }
 
   function trailHtml() {
@@ -600,6 +610,16 @@
     if (a !== 'quit') quitArm = false;
     if (a !== 'reset') resetArm = false;
     switch (a) {
+      case 'soundtest': { // beep + speak one word, then show what the iPad reports so a silent device can be diagnosed
+        const s = window.speechSynthesis, ev = [];
+        const box = document.getElementById('sndtest') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'sndtest' }));
+        box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#000d;color:#fff;font:14px/1.4 monospace;padding:10px;border-radius:10px;white-space:pre-wrap';
+        const show = () => { box.textContent = `Sound test v7\nsound toggle: ${state.sound} | voice toggle: ${state.voice}\naudio engine: ${ac ? ac.state : 'none'}\nspeech supported: ${!!s}${s ? ` | voices: ${s.getVoices().length} | speaking: ${s.speaking} | paused: ${s.paused}` : ''}\naudioSession: ${navigator.audioSession ? navigator.audioSession.type : 'not supported'}\nspeech events: ${ev.join(', ') || 'none yet'}\n(tap the 🧪 again to close)`; };
+        if (box.dataset.open === '1') { box.remove(); return; }
+        box.dataset.open = '1'; state.sound && sfx.bell();
+        if (s) { try { s.cancel(); const u = new SpeechSynthesisUtterance('Testing, one, two, three'); u.lang = 'en-US'; ['start', 'end', 'error'].forEach((n) => { u['on' + n] = (e) => { ev.push(n + (e && e.error ? ':' + e.error : '')); show(); }; }); setTimeout(() => s.speak(u), 80); } catch (err) { ev.push('threw:' + err.message); } }
+        show(); setTimeout(show, 1500); return;
+      }
       case 'sound': state.sound = !state.sound; save(); return render();
       case 'voice': state.voice = !state.voice; if (!state.voice && window.speechSynthesis) window.speechSynthesis.cancel(); save(); return render();
       case 'mix': return startMatch('mix');
