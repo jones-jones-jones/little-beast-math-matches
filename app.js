@@ -191,17 +191,25 @@
       mv('Arm drag', '{o} drags the arm and gets behind. Little Beast is a fighter, so back to the neutral position!'),
     ],
   };
-  // Recorded clips (assets/audio, made by tools/make_audio.py) play through a normal audio element,
-  // which works even when the device's built-in speech voice is silent or missing.
-  const voiceEl = new Audio();
+  // Recorded clips (assets/audio, made by tools/make_audio.py). They play through the Web Audio engine, the same
+  // path as the bell and whistle, because the device's built-in speech voice and <audio> elements can be silent.
+  const clipBuf = {}; let clipSrc = null, clipStatus = 'not tried';
+  function loadClip(f) {
+    if (clipBuf[f]) return Promise.resolve(clipBuf[f]);
+    const a = ctx(); if (!a) return Promise.reject(new Error('no audio engine'));
+    return fetch('assets/audio/' + f).then((r) => { if (!r.ok) throw new Error('fetch ' + r.status); return r.arrayBuffer(); })
+      .then((ab) => new Promise((res, rej) => a.decodeAudioData(ab, res, rej))).then((b) => (clipBuf[f] = b));
+  }
   function playClip(text) {
-    const f = window.LBM_AUDIO && window.LBM_AUDIO[text]; if (!f) return false;
-    try {
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      voiceEl.pause(); voiceEl.src = 'assets/audio/' + f; voiceEl.volume = 1;
-      const p = voiceEl.play(); if (p && p.catch) p.catch(() => {});
-      return true;
-    } catch (e) { return false; }
+    const f = window.LBM_AUDIO && window.LBM_AUDIO[text]; if (!f) { clipStatus = 'no clip for "' + text + '"'; return false; }
+    const a = ctx(); if (!a) { clipStatus = 'no audio engine'; return false; }
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); if (clipSrc) { clipSrc.stop(); clipSrc = null; } } catch (e) { /* ignore */ }
+    clipStatus = 'loading ' + f;
+    loadClip(f).then((b) => {
+      const src = a.createBufferSource(), g = a.createGain(); src.buffer = b; g.gain.value = 1.6;
+      src.connect(g); g.connect(a.destination); src.start(0); clipSrc = src; clipStatus = 'played ' + f + ' (' + b.duration.toFixed(2) + 's, engine ' + a.state + ')';
+    }).catch((e) => { clipStatus = 'FAILED ' + f + ': ' + (e && e.message ? e.message : e); });
+    return true;
   }
   function speakWord(text, queue) {
     if (text && playClip(text)) return;
@@ -638,9 +646,10 @@
         box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#000d;color:#fff;font:14px/1.4 monospace;padding:10px;border-radius:10px;white-space:pre-wrap';
         if (box.dataset.open === '1') { box.remove(); return; }
         box.dataset.open = '1';
+        const clipKey = Object.keys(window.LBM_AUDIO || {})[0]; if (clipKey) playClip(clipKey);
         const vs = s ? s.getVoices() : [], picked = s ? pickVoice(vs, /(Samantha|Alex|Karen|Nicky|Aaron)/i, /^en[-_]US/i) || pickVoice(vs, /./, /^en/i) : null;
         const nLocal = vs.filter((x) => x.localService !== false).length;
-        const show = () => { box.textContent = `Sound test v9\nsound: ${state.sound} | voice: ${state.voice} | engine: ${ac ? ac.state : 'none'} | session: ${navigator.audioSession ? navigator.audioSession.type : 'n/a'}\nvoices: ${vs.length} (installed: ${nLocal}) | app voice: ${picked ? picked.name + ' [' + picked.lang + ']' : 'system default'}\nevents: ${ev.join(', ') || 'none yet'}\n(tap 🧪 again to close)`; };
+        const show = () => { box.textContent = `Sound test v11\nsound: ${state.sound} | voice: ${state.voice} | engine: ${ac ? ac.state : 'none'} | session: ${navigator.audioSession ? navigator.audioSession.type : 'n/a'}\nvoices: ${vs.length} (installed: ${nLocal}) | app voice: ${picked ? picked.name + ' [' + picked.lang + ']' : 'system default'}\nclips loaded: ${Object.keys(window.LBM_AUDIO || {}).length} | clip: ${clipStatus}\nclips loaded: ${Object.keys(window.LBM_AUDIO || {}).length} | clip: ${clipStatus}\nevents: ${ev.join(', ') || 'none yet'}\n(tap 🧪 again to close)`; };
         if (s) {
           try {
             s.cancel(); let t0 = 0;
@@ -652,7 +661,7 @@
             speakNow(s, mk('B', 'B. This is the app voice.', picked, true), true);
           } catch (err) { ev.push('threw:' + err.message); }
         }
-        show(); return;
+        show(); setTimeout(show, 1200); return;
       }
       case 'sound': state.sound = !state.sound; save(); return render();
       case 'voice': state.voice = !state.voice; if (!state.voice && window.speechSynthesis) window.speechSynthesis.cancel(); save(); return render();
