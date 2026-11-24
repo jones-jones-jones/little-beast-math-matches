@@ -134,6 +134,12 @@
     win(k) { k = k || 0.8; [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.25, 'triangle', i * 0.13, 0.13)); noise(2, 1500, 0.6, 0.3 * k, 0.2, 0.2); },
   };
 
+  // iOS lists voices that are not downloaded and "speaks" them silently. Only use installed (localService) voices;
+  // if none match, leave the voice unset so the system default is used.
+  function pickVoice(vs, nameRe, langRe) {
+    const local = vs.filter((x) => x.localService !== false);
+    return local.find((x) => langRe.test(x.lang) && nameRe.test(x.name)) || local.find((x) => langRe.test(x.lang)) || null;
+  }
   // announcer voice (text is always shown; speech is optional)
   function say(text) {
     if (!state.voice) return;
@@ -141,7 +147,7 @@
       const s = window.speechSynthesis; if (!s) return; s.cancel();
       const u = new SpeechSynthesisUtterance(text.replace(/[^\w\s.,!?'-]/g, ''));
       const vs = s.getVoices();
-      const v = vs.find((x) => /^en[-_](US|GB)/i.test(x.lang) && /(Daniel|Alex|Fred|Aaron|Arthur|Tom|Male)/i.test(x.name)) || vs.find((x) => /^en/i.test(x.lang));
+      const v = pickVoice(vs, /(Daniel|Alex|Fred|Aaron|Arthur|Tom|Male)/i, /^en[-_](US|GB)/i) || pickVoice(vs, /./, /^en/i);
       if (v) u.voice = v; u.rate = 1.05; u.pitch = 0.8; u.volume = 1; u.lang = (v && v.lang) || 'en-US'; speakNow(s, u);
     } catch (e) { /* ignore */ }
   }
@@ -190,7 +196,7 @@
       const s = window.speechSynthesis; if (!s || !text) return;
       if (!queue) s.cancel();
       const u = new SpeechSynthesisUtterance(text), vs = s.getVoices();
-      const v = vs.find((x) => /^en[-_]US/i.test(x.lang) && /(Samantha|Alex|Karen|Nicky|Aaron)/i.test(x.name)) || vs.find((x) => /^en[-_]US/i.test(x.lang)) || vs.find((x) => /^en/i.test(x.lang));
+      const v = pickVoice(vs, /(Samantha|Alex|Karen|Nicky|Aaron)/i, /^en[-_]US/i) || pickVoice(vs, /./, /^en/i);
       if (v) u.voice = v; u.rate = 0.85; u.pitch = 1; u.volume = 1; u.lang = (v && v.lang) || 'en-US'; speakNow(s, u, queue);
     } catch (e) { /* ignore */ }
   }
@@ -613,15 +619,27 @@
     if (a !== 'quit') quitArm = false;
     if (a !== 'reset') resetArm = false;
     switch (a) {
-      case 'soundtest': { // beep + speak one word, then show what the iPad reports so a silent device can be diagnosed
+      case 'soundtest': { // speak with the default voice, then the app's voice; show what the iPad reports
         const s = window.speechSynthesis, ev = [];
         const box = document.getElementById('sndtest') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'sndtest' }));
         box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#000d;color:#fff;font:14px/1.4 monospace;padding:10px;border-radius:10px;white-space:pre-wrap';
-        const show = () => { box.textContent = `Sound test v8\nsound toggle: ${state.sound} | voice toggle: ${state.voice}\naudio engine: ${ac ? ac.state : 'none'}\nspeech supported: ${!!s}${s ? ` | voices: ${s.getVoices().length} | speaking: ${s.speaking} | paused: ${s.paused}` : ''}\naudioSession: ${navigator.audioSession ? navigator.audioSession.type : 'not supported'}\nspeech events: ${ev.join(', ') || 'none yet'}\n(tap the 🧪 again to close)`; };
         if (box.dataset.open === '1') { box.remove(); return; }
         box.dataset.open = '1';
-        if (s) { try { s.cancel(); const u = new SpeechSynthesisUtterance('Testing, one, two, three'); u.lang = 'en-US'; ['start', 'end', 'error'].forEach((n) => { u.addEventListener(n, (e) => { ev.push(n + (e && e.error ? ':' + e.error : '')); show(); if (n !== 'start' && state.sound) setTimeout(() => sfx.bell(), 300); }); }); speakNow(s, u); } catch (err) { ev.push('threw:' + err.message); } }
-        show(); setTimeout(show, 1500); return;
+        const vs = s ? s.getVoices() : [], picked = s ? pickVoice(vs, /(Samantha|Alex|Karen|Nicky|Aaron)/i, /^en[-_]US/i) || pickVoice(vs, /./, /^en/i) : null;
+        const nLocal = vs.filter((x) => x.localService !== false).length;
+        const show = () => { box.textContent = `Sound test v9\nsound: ${state.sound} | voice: ${state.voice} | engine: ${ac ? ac.state : 'none'} | session: ${navigator.audioSession ? navigator.audioSession.type : 'n/a'}\nvoices: ${vs.length} (installed: ${nLocal}) | app voice: ${picked ? picked.name + ' [' + picked.lang + ']' : 'system default'}\nevents: ${ev.join(', ') || 'none yet'}\n(tap 🧪 again to close)`; };
+        if (s) {
+          try {
+            s.cancel(); let t0 = 0;
+            const mk = (label, text, voice, last) => { const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; if (voice) u.voice = voice;
+              u.addEventListener('start', () => { t0 = Date.now(); ev.push(label + ' start'); show(); });
+              u.addEventListener('end', () => { ev.push(label + ' end ' + (Date.now() - t0) + 'ms'); show(); if (last && state.sound) setTimeout(() => sfx.bell(), 300); });
+              u.addEventListener('error', (e) => { ev.push(label + ' error:' + e.error); show(); }); return u; };
+            speakNow(s, mk('A', 'A. This is the default voice.', null, false));
+            speakNow(s, mk('B', 'B. This is the app voice.', picked, true), true);
+          } catch (err) { ev.push('threw:' + err.message); }
+        }
+        show(); return;
       }
       case 'sound': state.sound = !state.sound; save(); return render();
       case 'voice': state.voice = !state.voice; if (!state.voice && window.speechSynthesis) window.speechSynthesis.cancel(); save(); return render();
